@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { WebContainer } from "@webcontainer/api";
 import { runTests } from "@/engine/run-tests";
-import { mintCredential, proposeFix } from "@/lib";
+import { mintCredential } from "@/lib/credentials";
 import { mockMessages } from "@/lib/mocks/agents";
 import type { FixCandidate, Incident, TestResult } from "@/lib/types";
 
@@ -15,6 +15,7 @@ export function IncidentWorkbench() {
   const [result, setResult] = useState<TestResult>();
   const [credentialOpen, setCredentialOpen] = useState(false);
   const [running, setRunning] = useState(false);
+  const [fixes, setFixes] = useState<FixCandidate[]>([]);
 
   useEffect(() => {
     void fetch("/api/incident")
@@ -25,7 +26,22 @@ export function IncidentWorkbench() {
       });
   }, []);
 
-  const fixes = useMemo(() => proposeFix({ files: incident ? [{ path: incident.activeFile, content: source }] : [], messages: mockMessages }), [incident, source]);
+  useEffect(() => {
+    if (!incident) return;
+    const controller = new AbortController();
+    void fetch("/api/agents/fixes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ files: [{ path: incident.activeFile, content: source }], messages: mockMessages }),
+      signal: controller.signal,
+    })
+      .then((response) => response.ok ? response.json() as Promise<FixCandidate[]> : Promise.reject())
+      .then((recommendations) => setFixes(recommendations))
+      .catch(() => {
+        if (!controller.signal.aborted) setFixes([]);
+      });
+    return () => controller.abort();
+  }, [incident, source]);
 
   const applyFix = (fix: FixCandidate) => {
     setSelectedFixes((current) => [...current, fix.id]);
