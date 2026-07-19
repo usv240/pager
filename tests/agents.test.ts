@@ -6,6 +6,8 @@ import { jonMessages } from "../lib/agents/personas/jon";
 import { proposeFix } from "../lib/agents/propose-fix";
 import { stakeholderReply } from "../lib/agents/stakeholder-reply";
 import type { AgentGamePhase, AgentStakeholderContext } from "../lib/agents/types";
+import { POST as fixesPost } from "../app/api/agents/fixes/route";
+import { POST as revealPost } from "../app/api/agents/reveal/route";
 
 const originalMockMode = process.env.MOCK_MODE;
 const originalApiKey = process.env.OPENAI_API_KEY;
@@ -70,7 +72,53 @@ describe("authored checkout candidates", () => {
         patch: expect.stringContaining("export class CheckoutService"),
       }));
       expect(candidate.patch).toContain("async processCheckout");
+      expect(candidate.teaching.split(".").filter(Boolean).length).toBeGreaterThanOrEqual(2);
     }
+  });
+});
+
+describe("candidate reveal API", () => {
+  test("keeps fault tags and teaching out of learner-facing fixes", async () => {
+    process.env.MOCK_MODE = "1";
+
+    const response = await fixesPost(new Request("http://pager.test/api/agents/fixes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(emptyContext),
+    }));
+    const fixes = await response.json() as Array<Record<string, unknown>>;
+
+    expect(response.status).toBe(200);
+    expect(fixes).toHaveLength(3);
+    for (const fix of fixes) {
+      expect(fix).not.toHaveProperty("faultTag");
+      expect(fix).not.toHaveProperty("teaching");
+    }
+  });
+
+  test("reveals the authored fault tag and teaching after a decision", async () => {
+    const candidate = checkout2pmCandidates[0];
+    const response = await revealPost(new Request("http://pager.test/api/agents/reveal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ candidateId: candidate.id, decision: "rejected" }),
+    }));
+
+    await expect(response.json()).resolves.toEqual({
+      id: candidate.id,
+      faultTag: candidate.faultTag,
+      teaching: candidate.teaching,
+    });
+  });
+
+  test("rejects an unknown candidate ID", async () => {
+    const response = await revealPost(new Request("http://pager.test/api/agents/reveal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ candidateId: "unknown", decision: "applied" }),
+    }));
+
+    expect(response.status).toBe(400);
   });
 });
 
