@@ -13,7 +13,7 @@ async function collectFiles(root: string, current = root): Promise<IncidentFile[
   const nested = await Promise.all(entries.map(async (entry) => {
     const entryPath = path.join(current, entry.name);
     if (entry.isDirectory()) return collectFiles(root, entryPath);
-    if (!sourceExtensions.has(path.extname(entry.name)) || entry.name === "package-lock.json") return [];
+    if (!sourceExtensions.has(path.extname(entry.name))) return [];
     return [{ path: path.relative(root, entryPath).replaceAll("\\", "/"), content: await readFile(entryPath, "utf8") }];
   }));
   return nested.flat();

@@ -30,7 +30,7 @@ function resultFromOutput(output: string, passed: boolean): TestResult {
 export async function runTests(incident: Incident, source: string, runtime: WebContainer | null): Promise<{ result: TestResult; runtime: WebContainer }> {
   const webcontainer = runtime ?? await WebContainer.boot();
   if (!runtime) await webcontainer.mount(fileTree(incident.files) as Parameters<typeof webcontainer.mount>[0]);
-  await webcontainer.fs.writeFile(incident.activeFile, source);
+  await Promise.all(incident.files.map((file) => webcontainer.fs.writeFile(file.path, file.path === incident.activeFile ? source : file.content)));
   const install = await webcontainer.spawn("npm", ["install"]);
   await install.exit;
   const testProcess = await webcontainer.spawn("npm", ["test"]);
