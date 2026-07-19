@@ -1,35 +1,66 @@
 # Pager
 
-**The gym for the one skill that now decides who gets hired: catching a confident AI that's wrong.**
+**Pager trains the judgment to catch a confident AI that is wrong.**
 
-You get *paged* into a live production incident inside a real codebase you've never seen — running in your browser, alert flashing red, an AI PM and senior engineer messaging you, a clock ticking. Beside you is an AI pair-programmer that proposes fixes — but some are subtly, confidently wrong (it patches the symptom, not the cause). You investigate, catch the bad fix, and ship the one that actually holds. When the real test suite passes and the alert clears, Pager mints an **execution-verified credential** — unfakeable proof you handled a real incident and caught an incorrect AI fix under pressure.
+Players are paged into a production incident in an unfamiliar codebase. They inspect the repository, weigh AI-proposed repairs, reject the symptom-only advice, and run the incident's actual test suite. Pager mints a credential only after execution verifies the repair and the session records that the player rejected incorrect AI advice.
 
-Built for **OpenAI Build Week** with **Codex + GPT-5.6**. Track: Education.
+Built for **OpenAI Build Week** with **Codex + GPT-5.6**. Track: **Education**.
 
----
+## The v1 mission
 
-## Why
+**The 2 PM Incident** is a 2,519-line TypeScript checkout service with a planted race condition. Two concurrent checkout calls can both charge the same order; the losing request misleadingly looks like a payment-gateway failure. The mission's acceptance test distinguishes a symptom-only fix from a repair that actually guarantees one charge.
 
-AI removed the bottom rung of the career ladder — entry-level tech hiring is down ~25% YoY, new-grad CS unemployment is 6–7%, and "entry-level" jobs demand years of experience nobody can get. Meanwhile the interview changed: Amazon and Stripe swapped LeetCode for real debugging and *"which AI-generated fix would you ship, and why?"* The skill being tested is now **judging AI, not writing code** — and there's nowhere to train it. Pager is that training ground.
+Pager also includes an **experimental Python/Pyodide runner** and a small Python incident to prove the language-runner architecture. The TypeScript mission is the fully authored v1 learning experience.
 
-## Status
+## Run locally
 
-🚧 Early build (OpenAI Build Week, Jul 2026). v1 = one mission: **"The 2 PM Incident"** — a checkout service double-charging customers under load.
-
-## Getting started
+Requirements: Node.js 20 or newer and an internet connection for first-run WebContainer/Pyodide downloads.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Set `MOCK_MODE=1` to run the full experience offline with no API calls. To wire real models, add `OPENAI_API_KEY` to `.env.local`.
+Open `http://localhost:3000`. Choose a mission from the selector:
 
-_(Setup expands as the build progresses.)_
+- **The 2 PM Incident** — TypeScript executed in WebContainer.
+- **The Invoice Queue Retry** — experimental Python executed in Pyodide.
 
-## How we built it with Codex
+### TypeScript demo path
 
-See [`CODEX-LOG.md`](CODEX-LOG.md) for where Codex accelerated the work and the key decisions we made. Project context for the agent lives in [`AGENTS.md`](AGENTS.md).
+1. Open **The 2 PM Incident**.
+2. Reject either incorrect AI recommendation.
+3. Apply **Share in-flight checkout work**.
+4. Run the verification suite.
+5. On a genuine test pass, Pager opens the execution-verified credential screen.
+
+The test suite—not an LLM—decides whether the alert clears or a credential mints.
+
+### Validate the app
+
+```bash
+npm run typecheck
+npm run lint
+npm run build
+```
+
+## Architecture
+
+- `incidents/<id>/manifest.json` defines a mission's language, runner, timing, source root, and test command.
+- `engine/runners/` selects an execution runtime. Only verified runners are enabled for learners.
+- `webcontainer-node` runs the TypeScript mission's real `npm test` suite in the browser.
+- `pyodide` runs standard-library Python `unittest` fixtures in the browser; it remains experimental pending final browser smoke testing.
+- `lib/mocks/` supplies the current authored TypeScript stakeholder and AI-pair content. Live model agents stay behind the same interface and will replace these mocks without changing deterministic verification.
+
+Java and C++ are intentionally not presented as supported. They require isolated compiler sandboxes before Pager can honestly execute their missions.
+
+## Deploy
+
+Pager is a standard Next.js App Router application and deploys to Vercel. The included cross-origin isolation headers are required for WebContainer execution. Deploy the `main` branch only after the browser verification flow has been smoke-tested.
+
+## How we built with Codex
+
+[`CODEX-LOG.md`](CODEX-LOG.md) records where Codex accelerated the work, the decisions the team made, and how GPT-5.6 was used. The task context and constraints live in [`AGENTS.md`](AGENTS.md).
 
 ## License
 
