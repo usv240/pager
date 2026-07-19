@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { WebContainer } from "@webcontainer/api";
 import { useRouter } from "next/navigation";
 import { saveCredentialSession } from "@/engine/credential-session";
 import { runTests } from "@/engine/run-tests";
+import type { RunnerRuntime } from "@/engine/runners";
 import { mintCredential, proposeFix } from "@/lib";
 import { mockMessages } from "@/lib/mocks/agents";
 import type { FixCandidate, Incident, TestResult } from "@/lib/types";
 
 export function IncidentWorkbench() {
-  const webcontainerRef = useRef<WebContainer | null>(null);
+  const runnerRuntimeRef = useRef<RunnerRuntime | null>(null);
   const router = useRouter();
   const [incident, setIncident] = useState<Incident>();
   const [files, setFiles] = useState<Incident["files"]>([]);
@@ -44,8 +44,8 @@ export function IncidentWorkbench() {
     if (!activeIncident || running) return;
     setRunning(true);
     try {
-      const execution = await runTests(activeIncident, webcontainerRef.current);
-      webcontainerRef.current = execution.runtime;
+      const execution = await runTests(activeIncident, runnerRuntimeRef.current);
+      runnerRuntimeRef.current = execution.runtime;
       setResult(execution.result);
       const caughtIncorrectAiFix = selectedFixes.some((id) => id !== "atomic-payment");
       if (execution.result.passed && caughtIncorrectAiFix) {

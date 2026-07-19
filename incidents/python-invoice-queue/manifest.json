@@ -1,0 +1,13 @@
+{
+  "title": "The Invoice Queue Retry",
+  "service": "invoice-queue",
+  "severity": "SEV-2",
+  "alert": "Duplicate invoice work items are appearing after a retry.",
+  "serviceDirectory": "invoice-queue",
+  "activeFile": "src/invoice_queue.py",
+  "execution": {
+    "language": "python",
+    "runner": "pyodide",
+    "testCommand": ["unittest", "discover", "tests"]
+  }
+}
