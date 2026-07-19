@@ -1,7 +1,12 @@
-import { mockFixes, mockMessages } from "@/lib/mocks/agents";
 import { mockIncident } from "@/lib/mocks/incident";
-import type { Credential, FixCandidate, FixContext, Incident, SessionLog, StakeholderMessage } from "@/lib/types";
+import { mintCredential } from "@/lib/credentials";
+import { proposeFix as authoredProposeFix, stakeholderReply as authoredStakeholderReply } from "@/lib/agents";
+import type { FixCandidate, FixContext, Incident, StakeholderMessage } from "@/lib/types";
+import type { AgentStakeholderContext, AgentStakeholderRole } from "@/lib/agents";
 export function generateIncident(): Incident { return mockIncident; }
-export function proposeFix(_context: FixContext): FixCandidate[] { return mockFixes; }
-export function stakeholderReply(_role: StakeholderMessage["role"], _context: FixContext): StakeholderMessage { return mockMessages[1]; }
-export function mintCredential(session: SessionLog): Credential { return { id: `pager-${session.incidentId}`, title: "Pager: Incident Responder", summary: "Verified a production checkout fix and rejected an incorrect AI recommendation.", issuedAt: new Date().toLocaleDateString() }; }
+export async function proposeFix(context: FixContext): Promise<FixCandidate[]> { return authoredProposeFix(context); }
+export async function stakeholderReply(
+  role: AgentStakeholderRole,
+  context: AgentStakeholderContext,
+): Promise<StakeholderMessage> { return authoredStakeholderReply(role, context); }
+export { mintCredential };
