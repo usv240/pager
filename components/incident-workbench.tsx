@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { saveCredentialSession } from "@/engine/credential-session";
 import { runTests } from "@/engine/run-tests";
 import type { RunnerRuntime } from "@/engine/runners";
+import { IncidentClock } from "@/components/incident-clock";
 import { mintCredential, proposeFix } from "@/lib";
 import { mockMessages } from "@/lib/mocks/agents";
 import type { FixCandidate, Incident, TestResult } from "@/lib/types";
@@ -63,7 +64,7 @@ export function IncidentWorkbench() {
 
   if (!incident) return <main className="shell"><p>Loading incident artifact…</p></main>;
   return <main className="shell">
-    <header className="topbar"><div><span className="brand">PAGER</span><span className="environment">production / {incident.service}</span></div><span className="timer">02:14 elapsed</span></header>
+    <header className="topbar"><div><span className="brand">PAGER</span><span className="environment">production / {incident.service}</span></div><IncidentClock timeLimitSeconds={incident.timeLimitSeconds} /></header>
     <section className={result?.passed ? "alert cleared" : "alert"}><strong>{result?.passed ? "RESOLVED" : `${incident.severity} · INCIDENT`}</strong><span>{result?.passed ? "The incident has cleared." : incident.alert}</span></section>
     <section className="mission"><span>INCIDENT / {incident.title}</span><h1>Find the cause. Don’t ship the confident wrong fix.</h1></section>
     <div className="workbench">

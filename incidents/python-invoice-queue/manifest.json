@@ -3,6 +3,7 @@
   "service": "invoice-queue",
   "severity": "SEV-2",
   "alert": "Duplicate invoice work items are appearing after a retry.",
+  "timeLimitSeconds": 900,
   "serviceDirectory": "invoice-queue",
   "activeFile": "src/invoice_queue.py",
   "execution": {
