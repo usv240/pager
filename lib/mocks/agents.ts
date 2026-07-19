@@ -5,9 +5,9 @@ export const mockMessages: StakeholderMessage[] = [
   { id: "pair-1", role: "ai-pair", author: "AI Pair", body: "I found two plausible paths. I’d validate the interleaving before shipping either one.", timestamp: "2:07 PM" }
 ];
 export const mockFixes: FixCandidate[] = [
-  { id: "increase-timeout", title: "Increase the gateway timeout", faultTag: "symptom-not-cause", rationale: "The alert presents as a gateway error, so a longer timeout looks safe—but it does not make the read/create sequence atomic.", patch: "await gateway.charge(order.total, order.paymentToken, { timeout: 10_000 });" },
-  { id: "idempotency-key", title: "Use an idempotency key for the charge", faultTag: "partial-fix", rationale: "This reduces duplicate gateway charges, but without a transaction the payment record can still diverge from the charge result.", patch: "const charge = await gateway.charge(order.total, order.paymentToken, { idempotencyKey: order.id });" },
-  { id: "atomic-payment", title: "Share in-flight checkout work", faultTag: "verified", rationale: "Claim checkout work before the gateway await. Concurrent callers join the same in-flight promise, so only one charge can be created.", patch: "Deduplicate in-flight checkout work before charging." }
+  { id: "increase-timeout", title: "Increase the gateway timeout", faultTag: "symptom-not-cause", rationale: "The gateway reported a confirmation error after charging. Give the confirmation path more time before treating it as a failure.", patch: "await gateway.charge(order.total, order.paymentToken, { timeout: 10_000 });" },
+  { id: "idempotency-key", title: "Use an idempotency key for the charge", faultTag: "partial-fix", rationale: "Attach a stable key to each gateway charge so a retry resolves to the original payment instead of creating another one.", patch: "const charge = await gateway.charge(order.total, order.paymentToken, { idempotencyKey: order.id });" },
+  { id: "atomic-payment", title: "Share in-flight checkout work", faultTag: "verified", rationale: "Route concurrent requests for the same order through one in-flight checkout operation before charging the gateway.", patch: "Deduplicate in-flight checkout work before charging." }
 ];
 
 const originalCheckoutMethod = `  async processCheckout(orderId: string): Promise<CheckoutResult> {

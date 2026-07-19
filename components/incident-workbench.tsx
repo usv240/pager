@@ -18,7 +18,8 @@ export function IncidentWorkbench() {
   const [catalog, setCatalog] = useState<IncidentSummary[]>([]);
   const [files, setFiles] = useState<Incident["files"]>([]);
   const [activeFile, setActiveFile] = useState("");
-  const [selectedFixes, setSelectedFixes] = useState<string[]>([]);
+  const [decisions, setDecisions] = useState<Record<string, "applied" | "rejected">>({});
+  const [reviewingFixId, setReviewingFixId] = useState("");
   const [result, setResult] = useState<TestResult>();
   const [executionError, setExecutionError] = useState("");
   const [completionMessage, setCompletionMessage] = useState("");
@@ -40,7 +41,8 @@ export function IncidentWorkbench() {
         setIncident(loadedIncident);
         setFiles(loadedIncident.files);
         setActiveFile(loadedIncident.activeFile);
-        setSelectedFixes([]);
+        setDecisions({});
+        setReviewingFixId("");
         setResult(undefined);
         setExecutionError("");
         setCompletionMessage("");
@@ -53,9 +55,10 @@ export function IncidentWorkbench() {
   const supportsMockAgents = incident?.execution.language === "typescript";
   const fixes = useMemo(() => supportsMockAgents ? proposeFix({ files: activeIncident ? [{ path: activeIncident.activeFile, content: source }] : [], messages: mockMessages }) : [], [activeIncident, source, supportsMockAgents]);
 
-  const applyFix = (fix: FixCandidate) => {
-    setSelectedFixes((current) => [...current, fix.id]);
-    if (fix.faultTag === "verified") updateSource(applyMockFix(fix, source));
+  const recordDecision = (fix: FixCandidate, decision: "applied" | "rejected") => {
+    setDecisions((current) => ({ ...current, [fix.id]: decision }));
+    if (decision === "applied") updateSource(applyMockFix(fix, source));
+    setReviewingFixId("");
   };
 
   const verify = async () => {
@@ -67,9 +70,9 @@ export function IncidentWorkbench() {
       const execution = await runTests(activeIncident, runnerRuntimeRef.current);
       runnerRuntimeRef.current = execution.runtime;
       setResult(execution.result);
-      const caughtIncorrectAiFix = selectedFixes.some((id) => id !== "atomic-payment");
+      const caughtIncorrectAiFix = Object.entries(decisions).some(([id, decision]) => id !== "atomic-payment" && decision === "rejected");
       if (execution.result.passed && caughtIncorrectAiFix) {
-        const credential = mintCredential({ incidentId: activeIncident.id, startedAt: "", selectedFixIds: selectedFixes, caughtIncorrectAiFix, testResult: execution.result });
+        const credential = mintCredential({ incidentId: activeIncident.id, startedAt: "", selectedFixIds: Object.keys(decisions), caughtIncorrectAiFix, testResult: execution.result });
         saveCredentialSession({ credential, incidentTitle: activeIncident.title, caughtIncorrectAiFix, testResult: execution.result });
         router.push("/credential");
       } else if (execution.result.passed) {
@@ -83,6 +86,13 @@ export function IncidentWorkbench() {
     }
   };
 
+  const reviewFeedback = (fix: FixCandidate) => {
+    if (fix.faultTag === "symptom-not-cause") return "This proposal changes the reported gateway symptom, not the concurrent read-and-charge sequence.";
+    if (fix.faultTag === "partial-fix") return "This reduces one duplicate effect, but it does not make the complete checkout state transition atomic.";
+    if (fix.faultTag === "new-regression") return "This proposal introduces a separate reliability risk. Verify the full acceptance behavior before shipping it.";
+    return "This repair coordinates concurrent checkout work before the gateway call. The execution suite remains the final authority.";
+  };
+
   if (!incident) return <main className="shell"><p>Loading incident artifact…</p></main>;
   return <main className="shell">
     <header className="topbar"><div><span className="brand">PAGER</span><label className="environment">production / <select aria-label="Choose incident" value={incident.id} onChange={(event) => router.push(`/?incident=${encodeURIComponent(event.target.value)}`)}>{catalog.map((mission) => <option key={mission.id} value={mission.id}>{mission.title} · {mission.language}</option>)}</select></label></div><IncidentClock timeLimitSeconds={incident.timeLimitSeconds} /></header>
@@ -91,7 +101,7 @@ export function IncidentWorkbench() {
     <div className="workbench">
       <section className="panel code-panel" aria-label="Incident source code"><div className="panel-heading"><span>{activeFile}</span><span>{incident.execution.language}</span></div><nav className="file-explorer" aria-label="Incident files">{files.map((file) => <button key={file.path} className={file.path === activeFile ? "file selected" : "file"} onClick={() => setActiveFile(file.path)}>{file.path}</button>)}</nav><textarea aria-label="Incident source editor" value={source} onChange={(event) => updateSource(event.target.value)} spellCheck={false} /><div className="verify-row"><button className="verify" onClick={() => void verify()} disabled={running}>{running ? "Running real tests…" : "Run verification suite"}</button>{result && <span className={result.passed ? "result pass" : "result fail"}>{result.summary}</span>}</div>{executionError && <p className="completion-message" role="alert">{executionError}</p>}</section>
       <aside className="side-stack">
-        {supportsMockAgents ? <><section className="panel messages" aria-label="Incident chat"><div className="panel-heading">INCIDENT CHANNEL <span>3 online</span></div>{mockMessages.map((message) => <article key={message.id} className="message"><strong>{message.author}</strong><time>{message.timestamp}</time><p>{message.body}</p></article>)}</section><section className="panel fixes" aria-label="AI pair recommendations"><div className="panel-heading">AI PAIR · RECOMMENDATIONS</div>{fixes.map((fix) => <article key={fix.id} className="fix"><div><strong>{fix.title}</strong><p>{fix.rationale}</p></div><button onClick={() => applyFix(fix)} disabled={selectedFixes.includes(fix.id)}>{selectedFixes.includes(fix.id) ? "Reviewed" : fix.faultTag === "verified" ? "Apply" : "Reject"}</button></article>)}</section></> : <section className="panel messages" aria-label="Agent availability"><div className="panel-heading">AGENT CONTENT</div><article className="message"><strong>Mission pack incomplete</strong><p>Python execution is available for smoke testing. PM, Senior, and AI Pair content must be authored and evaluated for this language before learners can use this mission.</p></article></section>}
+        {supportsMockAgents ? <><section className="panel messages" aria-label="Incident chat"><div className="panel-heading">INCIDENT CHANNEL <span>3 online</span></div>{mockMessages.map((message) => <article key={message.id} className="message"><strong>{message.author}</strong><time>{message.timestamp}</time><p>{message.body}</p></article>)}</section><section className="panel fixes" aria-label="AI pair recommendations"><div className="panel-heading">AI PAIR · RECOMMENDATIONS</div>{fixes.map((fix) => { const decision = decisions[fix.id]; const reviewing = reviewingFixId === fix.id; return <article key={fix.id} className="fix"><div><strong>{fix.title}</strong><p>{fix.rationale}</p>{decision && <p className="review-feedback"><b>{decision === "rejected" ? "Rejected." : "Applied."}</b> {reviewFeedback(fix)}</p>}{reviewing && <div className="decision-actions" role="group" aria-label={`Decision for ${fix.title}`}><button onClick={() => recordDecision(fix, "rejected")}>Reject suggestion</button><button onClick={() => recordDecision(fix, "applied")}>Apply suggestion</button></div>}</div>{!decision && <button onClick={() => setReviewingFixId(reviewing ? "" : fix.id)} aria-expanded={reviewing}>{reviewing ? "Close" : "Review"}</button>}</article>; })}</section></> : <section className="panel messages" aria-label="Agent availability"><div className="panel-heading">AGENT CONTENT</div><article className="message"><strong>Mission pack incomplete</strong><p>Python execution is available for smoke testing. PM, Senior, and AI Pair content must be authored and evaluated for this language before learners can use this mission.</p></article></section>}
       </aside>
     </div>
     {result && <section className="test-panel"><strong>VERIFICATION OUTPUT</strong>{result.tests.map((test) => <div key={test.name}><span className={test.passed ? "pass" : "fail"}>{test.passed ? "PASS" : "FAIL"}</span><span>{test.name}</span><em>{test.detail}</em></div>)}</section>}
