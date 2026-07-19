@@ -1,7 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { parseManifest } from "@/engine/incident-manifest";
-import type { Incident, IncidentFile } from "@/lib/types";
+import type { Incident, IncidentFile, IncidentSummary } from "@/lib/types";
 
 const sourceExtensions = new Set([".ts", ".tsx", ".js", ".json", ".py", ".java", ".c", ".cc", ".cpp", ".h", ".hpp"]);
 
@@ -16,11 +16,20 @@ async function collectFiles(root: string, current = root): Promise<IncidentFile[
   return nested.flat();
 }
 
-export async function loadIncident(): Promise<Incident> {
+export async function listIncidents(): Promise<IncidentSummary[]> {
   const incidentsRoot = path.join(process.cwd(), "incidents");
   const incidentDirectories = await readdir(incidentsRoot, { withFileTypes: true });
-  const requestedId = process.env.PAGER_INCIDENT_ID;
-  const incidentDirectory = incidentDirectories.find((entry) => entry.isDirectory() && entry.name === requestedId)
+  return Promise.all(incidentDirectories.filter((entry) => entry.isDirectory()).map(async (entry) => {
+    const manifest = parseManifest(JSON.parse(await readFile(path.join(incidentsRoot, entry.name, "manifest.json"), "utf8")));
+    return { id: entry.name, title: manifest.title, language: manifest.execution.language };
+  }));
+}
+
+export async function loadIncident(requestedId?: string): Promise<Incident> {
+  const incidentsRoot = path.join(process.cwd(), "incidents");
+  const incidentDirectories = await readdir(incidentsRoot, { withFileTypes: true });
+  const selectedId = requestedId ?? process.env.PAGER_INCIDENT_ID;
+  const incidentDirectory = incidentDirectories.find((entry) => entry.isDirectory() && entry.name === selectedId)
     ?? incidentDirectories.find((entry) => entry.isDirectory());
   if (!incidentDirectory) throw new Error("No incident artifact is available.");
 

@@ -1,35 +1,49 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { saveCredentialSession } from "@/engine/credential-session";
 import { runTests } from "@/engine/run-tests";
 import type { RunnerRuntime } from "@/engine/runners";
 import { IncidentClock } from "@/components/incident-clock";
 import { mintCredential, proposeFix } from "@/lib";
 import { mockMessages } from "@/lib/mocks/agents";
-import type { FixCandidate, Incident, TestResult } from "@/lib/types";
+import type { FixCandidate, Incident, IncidentSummary, TestResult } from "@/lib/types";
 
 export function IncidentWorkbench() {
   const runnerRuntimeRef = useRef<RunnerRuntime | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [incident, setIncident] = useState<Incident>();
+  const [catalog, setCatalog] = useState<IncidentSummary[]>([]);
   const [files, setFiles] = useState<Incident["files"]>([]);
   const [activeFile, setActiveFile] = useState("");
   const [selectedFixes, setSelectedFixes] = useState<string[]>([]);
   const [result, setResult] = useState<TestResult>();
   const [completionMessage, setCompletionMessage] = useState("");
   const [running, setRunning] = useState(false);
+  const selectedIncidentId = searchParams.get("incident") ?? "";
 
   useEffect(() => {
-    void fetch("/api/incident")
+    void fetch("/api/incidents")
+      .then((response) => response.json() as Promise<IncidentSummary[]>)
+      .then(setCatalog);
+  }, []);
+
+  useEffect(() => {
+    const query = selectedIncidentId ? `?incident=${encodeURIComponent(selectedIncidentId)}` : "";
+    void fetch(`/api/incident${query}`)
       .then((response) => response.json() as Promise<Incident>)
       .then((loadedIncident) => {
+        runnerRuntimeRef.current = null;
         setIncident(loadedIncident);
         setFiles(loadedIncident.files);
         setActiveFile(loadedIncident.activeFile);
+        setSelectedFixes([]);
+        setResult(undefined);
+        setCompletionMessage("");
       });
-  }, []);
+  }, [selectedIncidentId]);
 
   const source = files.find((file) => file.path === activeFile)?.content ?? "";
   const activeIncident = useMemo(() => incident && { ...incident, files, activeFile }, [incident, files, activeFile]);
@@ -64,7 +78,7 @@ export function IncidentWorkbench() {
 
   if (!incident) return <main className="shell"><p>Loading incident artifact…</p></main>;
   return <main className="shell">
-    <header className="topbar"><div><span className="brand">PAGER</span><span className="environment">production / {incident.service}</span></div><IncidentClock timeLimitSeconds={incident.timeLimitSeconds} /></header>
+    <header className="topbar"><div><span className="brand">PAGER</span><label className="environment">production / <select aria-label="Choose incident" value={incident.id} onChange={(event) => router.push(`/?incident=${encodeURIComponent(event.target.value)}`)}>{catalog.map((mission) => <option key={mission.id} value={mission.id}>{mission.title} · {mission.language}</option>)}</select></label></div><IncidentClock timeLimitSeconds={incident.timeLimitSeconds} /></header>
     <section className={result?.passed ? "alert cleared" : "alert"}><strong>{result?.passed ? "RESOLVED" : `${incident.severity} · INCIDENT`}</strong><span>{result?.passed ? "The incident has cleared." : incident.alert}</span></section>
     <section className="mission"><span>INCIDENT / {incident.title}</span><h1>Find the cause. Don’t ship the confident wrong fix.</h1></section>
     <div className="workbench">
