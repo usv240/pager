@@ -7,7 +7,7 @@ import { runTests } from "@/engine/run-tests";
 import type { RunnerRuntime } from "@/engine/runners";
 import { IncidentClock } from "@/components/incident-clock";
 import { mintCredential, proposeFix } from "@/lib";
-import { mockMessages } from "@/lib/mocks/agents";
+import { applyMockFix, mockMessages } from "@/lib/mocks/agents";
 import type { FixCandidate, Incident, IncidentSummary, TestResult } from "@/lib/types";
 
 export function IncidentWorkbench() {
@@ -53,7 +53,7 @@ export function IncidentWorkbench() {
 
   const applyFix = (fix: FixCandidate) => {
     setSelectedFixes((current) => [...current, fix.id]);
-    if (fix.faultTag === "verified") updateSource(fix.patch);
+    if (fix.faultTag === "verified") updateSource(applyMockFix(fix, source));
   };
 
   const verify = async () => {
