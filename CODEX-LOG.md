@@ -13,3 +13,9 @@
 ---
 
 _(entries added as we build)_
+
+## Task 1 — Mock war-room foundation
+- **What Codex did:** Scaffolded the strict Next.js app, shared integration contract, deterministic mock verification, and the clickable "2 PM Incident" workbench.
+- **Where it accelerated us:** Turned the product brief into a runnable, contract-first vertical slice without waiting for live models or WebContainers.
+- **Key decisions we made (human):** Keep verification deterministic, make incorrect AI fixes visibly reviewable before they are applied, and reserve `lib/agents` and `incidents/` for Subbu.
+- **GPT-5.6 usage:** Codex used for implementation; runtime model integration remains deliberately mocked during this task.
