@@ -11,6 +11,9 @@ import { mintCredential } from "@/lib/credentials";
 import { mockMessages } from "@/lib/mocks/agents";
 import type { FixCandidate, Incident, IncidentSummary, StakeholderMessage, TestResult } from "@/lib/types";
 
+type LearnerFix = Omit<FixCandidate, "faultTag">;
+type CandidateReveal = Pick<FixCandidate, "id" | "faultTag"> & { teaching: string };
+
 export function IncidentWorkbench() {
   const runnerRuntimeRef = useRef<RunnerRuntime | null>(null);
   const missionStartedAtRef = useRef<number | null>(null);
@@ -20,7 +23,8 @@ export function IncidentWorkbench() {
   const [catalog, setCatalog] = useState<IncidentSummary[]>([]);
   const [files, setFiles] = useState<Incident["files"]>([]);
   const [activeFile, setActiveFile] = useState("");
-  const [fixes, setFixes] = useState<FixCandidate[]>([]);
+  const [fixes, setFixes] = useState<LearnerFix[]>([]);
+  const [reveals, setReveals] = useState<Record<string, CandidateReveal>>({});
   const [stakeholderMessages, setStakeholderMessages] = useState<StakeholderMessage[]>([]);
   const [decisions, setDecisions] = useState<Record<string, "applied" | "rejected">>({});
   const [reviewingFixId, setReviewingFixId] = useState("");
@@ -47,6 +51,7 @@ export function IncidentWorkbench() {
         setFiles(loadedIncident.files);
         setActiveFile(loadedIncident.activeFile);
         setFixes([]);
+        setReveals({});
         setStakeholderMessages([]);
         setDecisions({});
         setReviewingFixId("");
@@ -63,9 +68,9 @@ export function IncidentWorkbench() {
   const reviewedCount = Object.keys(decisions).length;
   const gamePhase = useMemo<AgentGamePhase>(() => {
     if (result && !result.passed) return "after-tests-fail";
-    if (fixes.some((fix) => decisions[fix.id] === "applied" && fix.faultTag !== "verified")) return "after-wrong-fix";
+    if (fixes.some((fix) => decisions[fix.id] === "applied" && reveals[fix.id]?.faultTag !== "verified" && reveals[fix.id] !== undefined)) return "after-wrong-fix";
     return reviewedCount > 0 ? "mid" : "start";
-  }, [decisions, fixes, result, reviewedCount]);
+  }, [decisions, fixes, result, reveals, reviewedCount]);
   const channelMessages = [...stakeholderMessages, ...mockMessages.filter((message) => message.role === "ai-pair")];
 
   useEffect(() => {
@@ -77,7 +82,7 @@ export function IncidentWorkbench() {
       body: JSON.stringify({ files: activeIncident.files, messages: mockMessages }),
       signal: controller.signal,
     })
-      .then((response) => response.ok ? response.json() as Promise<FixCandidate[]> : Promise.reject())
+      .then((response) => response.ok ? response.json() as Promise<LearnerFix[]> : Promise.reject())
       .then(setFixes)
       .catch(() => {
         if (!controller.signal.aborted) setFixes([]);
@@ -107,9 +112,21 @@ export function IncidentWorkbench() {
     return () => controller.abort();
   }, [activeIncident, gamePhase, supportsAgents]);
 
-  const recordDecision = (fix: FixCandidate, decision: "applied" | "rejected") => {
+  const requestReveal = (fix: LearnerFix, decision: "applied" | "rejected") => {
+    void fetch("/api/agents/reveal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ candidateId: fix.id, decision }),
+    })
+      .then((response) => response.ok ? response.json() as Promise<CandidateReveal> : Promise.reject())
+      .then((reveal) => setReveals((current) => ({ ...current, [reveal.id]: reveal })))
+      .catch(() => undefined);
+  };
+
+  const recordDecision = (fix: LearnerFix, decision: "applied" | "rejected") => {
     setDecisions((current) => ({ ...current, [fix.id]: decision }));
     if (decision === "applied") updateSource(fix.targetFile ?? activeFile, fix.patch);
+    requestReveal(fix, decision);
     setReviewingFixId("");
   };
 
@@ -122,7 +139,7 @@ export function IncidentWorkbench() {
       const execution = await runTests(activeIncident, runnerRuntimeRef.current);
       runnerRuntimeRef.current = execution.runtime;
       setResult(execution.result);
-      const caughtIncorrectAiFix = fixes.some((fix) => decisions[fix.id] === "rejected" && fix.faultTag !== "verified");
+      const caughtIncorrectAiFix = fixes.some((fix) => decisions[fix.id] === "rejected" && reveals[fix.id]?.faultTag !== "verified" && reveals[fix.id] !== undefined);
       if (execution.result.passed && caughtIncorrectAiFix) {
         const credential = mintCredential({ incidentId: activeIncident.id, startedAt: "", selectedFixIds: Object.keys(decisions), caughtIncorrectAiFix, testResult: execution.result });
         saveCredentialSession({ credential, incidentTitle: activeIncident.title, briefing: activeIncident.briefing, caughtIncorrectAiFix, testResult: execution.result });
@@ -137,13 +154,6 @@ export function IncidentWorkbench() {
     }
   };
 
-  const reviewFeedback = (fix: FixCandidate) => {
-    if (fix.faultTag === "symptom-not-cause") return "This proposal changes the reported gateway symptom, not the concurrent read-and-charge sequence.";
-    if (fix.faultTag === "partial-fix") return "This reduces one duplicate effect, but it does not make the complete checkout state transition atomic.";
-    if (fix.faultTag === "new-regression") return "This proposal introduces a separate reliability risk. Verify the full acceptance behavior before shipping it.";
-    return "This repair coordinates concurrent checkout work before the gateway call. The execution suite remains the final authority.";
-  };
-
   if (!incident) return <main className="shell"><p>Loading incident artifact…</p></main>;
   return <main className="shell">
     <header className="topbar"><div><span className="brand">PAGER</span><label className="environment">production / <select aria-label="Choose incident" value={incident.id} onChange={(event) => router.push(`/?incident=${encodeURIComponent(event.target.value)}`)}>{catalog.map((mission) => <option key={mission.id} value={mission.id}>{mission.title} · {mission.language} · {mission.availability}</option>)}</select></label></div><IncidentClock timeLimitSeconds={incident.timeLimitSeconds} /></header>
@@ -153,7 +163,7 @@ export function IncidentWorkbench() {
     <div className="workbench">
       <section className="panel code-panel" aria-label="Incident source code"><div className="panel-heading"><span>{activeFile}</span><span>{incident.execution.language}</span></div><nav className="file-explorer" aria-label="Incident files">{files.map((file) => <button key={file.path} className={file.path === activeFile ? "file selected" : "file"} onClick={() => setActiveFile(file.path)}>{file.path}</button>)}</nav><textarea aria-label="Incident source editor" value={source} onChange={(event) => updateSource(activeFile, event.target.value)} spellCheck={false} /><div className="verify-row"><button className="verify" onClick={() => void verify()} disabled={running}>{running ? "Running real tests…" : "Run verification suite"}</button>{result && <span className={result.passed ? "result pass" : "result fail"}>{result.summary}</span>}</div>{executionError && <p className="completion-message" role="alert">{executionError}</p>}</section>
       <aside className="side-stack">
-        {supportsAgents ? <><section className="panel messages" aria-label="Incident chat"><div className="panel-heading">INCIDENT CHANNEL <span>3 online</span></div>{channelMessages.map((message) => <article key={message.id} className="message"><strong>{message.author}</strong><time>{message.timestamp}</time><p>{message.body}</p></article>)}</section><section className="panel fixes" aria-label="AI pair recommendations"><div className="panel-heading">AI PAIR · RECOMMENDATIONS</div>{fixes.map((fix) => { const decision = decisions[fix.id]; const reviewing = reviewingFixId === fix.id; return <article key={fix.id} className="fix"><div><strong>{fix.title}</strong><p>{fix.rationale}</p>{decision && <p className="review-feedback"><b>{decision === "rejected" ? "Rejected." : "Applied."}</b> {reviewFeedback(fix)}</p>}{reviewing && <div className="decision-actions" role="group" aria-label={`Decision for ${fix.title}`}><button onClick={() => recordDecision(fix, "rejected")}>Reject suggestion</button><button onClick={() => recordDecision(fix, "applied")}>Apply suggestion</button></div>}</div>{!decision && <button onClick={() => setReviewingFixId(reviewing ? "" : fix.id)} aria-expanded={reviewing}>{reviewing ? "Close" : "Review"}</button>}</article>; })}</section></> : <section className="panel messages" aria-label="Agent availability"><div className="panel-heading">AGENT CONTENT</div><article className="message"><strong>Mission pack incomplete</strong><p>Python execution is available for smoke testing. PM, Senior, and AI Pair content must be authored and evaluated for this language before learners can use this mission.</p></article></section>}
+        {supportsAgents ? <><section className="panel messages" aria-label="Incident chat"><div className="panel-heading">INCIDENT CHANNEL <span>3 online</span></div>{channelMessages.map((message) => <article key={message.id} className="message"><strong>{message.author}</strong><time>{message.timestamp}</time><p>{message.body}</p></article>)}</section><section className="panel fixes" aria-label="AI pair recommendations"><div className="panel-heading">AI PAIR · RECOMMENDATIONS</div>{fixes.map((fix) => { const decision = decisions[fix.id]; const reveal = reveals[fix.id]; const reviewing = reviewingFixId === fix.id; return <article key={fix.id} className="fix"><div><strong>{fix.title}</strong><p>{fix.rationale}</p>{decision && reveal && <p className="review-feedback"><b>{decision === "rejected" ? "Rejected." : "Applied."}</b> {reveal.teaching}</p>}{reviewing && <div className="decision-actions" role="group" aria-label={`Decision for ${fix.title}`}><button onClick={() => recordDecision(fix, "rejected")}>Reject suggestion</button><button onClick={() => recordDecision(fix, "applied")}>Apply suggestion</button></div>}</div>{!decision && <button onClick={() => setReviewingFixId(reviewing ? "" : fix.id)} aria-expanded={reviewing}>{reviewing ? "Close" : "Review"}</button>}</article>; })}</section></> : <section className="panel messages" aria-label="Agent availability"><div className="panel-heading">AGENT CONTENT</div><article className="message"><strong>Mission pack incomplete</strong><p>Python execution is available for smoke testing. PM, Senior, and AI Pair content must be authored and evaluated for this language before learners can use this mission.</p></article></section>}
       </aside>
     </div>
     {result && <section className="test-panel"><strong>VERIFICATION OUTPUT</strong>{result.tests.map((test) => <div key={test.name}><span className={test.passed ? "pass" : "fail"}>{test.passed ? "PASS" : "FAIL"}</span><span>{test.name}</span><em>{test.detail}</em></div>)}</section>}

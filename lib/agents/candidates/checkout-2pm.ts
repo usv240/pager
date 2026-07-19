@@ -1,6 +1,8 @@
 import type { FixCandidate } from "../../types";
 
-export type AuthoredFixCandidate = FixCandidate;
+export interface AuthoredFixCandidate extends FixCandidate {
+  teaching: string;
+}
 
 const targetFile = "src/services/checkout-service.ts";
 
@@ -12,6 +14,8 @@ export const checkout2pmCandidates = [
       "Clearwater has already returned a successful charge, so a strict transition conflict should not turn that payment into a retryable checkout failure. Treat the completed order as confirmation, return the provider receipt, and remove the misleading 502 that sends customers back through checkout.",
     faultTag: "symptom-not-cause",
     targetFile,
+    teaching:
+      "When two checkout requests reach Clearwater before either one updates the order, both charges still succeed. This patch turns the second status-update failure into a success response, so the 502 disappears while the ledger still records two charges.",
     patch: `import {
   CheckoutUnavailableError,
   InvalidOrderTransitionError,
@@ -69,6 +73,8 @@ export class CheckoutService {
       "Give every payment attempt a stable identity derived from the order ID. Sending the same key for every submission of one checkout lets the payment boundary recognize repeat attempts as the same operation while preserving the existing order transition and error handling.",
     faultTag: "partial-fix",
     targetFile,
+    teaching:
+      "Both requests still reach Clearwater and create a charge before the order status changes. The added key is only an extra property because Clearwater has no idempotency contract, so it changes nothing and the ledger still records two charges.",
     patch: `import {
   CheckoutUnavailableError,
   InvalidOrderTransitionError,
@@ -136,6 +142,8 @@ export class CheckoutService {
       "Establish ownership of the order before creating the external charge. Move the order into `charging`, let duplicate callers join the active checkout, and finalize `charging` to `paid` only after Clearwater succeeds so every caller receives one completed result backed by one charge.",
     faultTag: "verified",
     targetFile,
+    teaching:
+      "The first request claims the order before it calls Clearwater, so it is the only caller that can create a charge. A duplicate request joins that checkout and receives the same completed result, leaving one charge in the ledger.",
     patch: `import {
   CheckoutUnavailableError,
   OrderNotFoundError,
