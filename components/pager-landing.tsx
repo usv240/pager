@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { InfoTip } from "@/components/info-tip";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function PagerLanding() {
   return <main id="main-content" className="landing-shell">
@@ -7,7 +8,7 @@ export function PagerLanding() {
     <header className="landing-nav" aria-label="Pager navigation">
       <Link className="brand" href="/">PAGER</Link>
       <nav><a href="#how-it-works">How it works</a><a href="#proof">Why it matters</a></nav>
-      <Link className="nav-start" href="/?play=1">Start incident</Link>
+      <div className="nav-actions"><ThemeToggle /><Link className="nav-start" href="/?play=1">Start incident</Link></div>
     </header>
 
     <section className="landing-hero" aria-labelledby="pager-title">
@@ -47,8 +48,13 @@ export function PagerLanding() {
       <ul>
         <li><strong>Authored fault model</strong><span>Recommendations are deliberately plausible, not randomly broken.</span></li>
         <li><strong>Execution-gated credential</strong><span>A passing test run and a recorded judgment are both required.</span></li>
-        <li><strong>Accessible by default</strong><span>Native controls, visible focus, and help that works on hover, focus, and tap.</span></li>
+        <li><strong>AI support with boundaries</strong><span>AI Pair, PM, and Senior guidance stay advisory; execution remains the authority.</span></li>
       </ul>
+    </section>
+
+    <section className="language-availability" aria-labelledby="languages-title">
+      <div><p className="eyebrow">Language availability</p><h2 id="languages-title">Start with a verified incident. Expand from evidence.</h2></div>
+      <div className="language-cards"><article><span className="status complete">Complete</span><h3>TypeScript / JavaScript</h3><p>The flagship incident: full AI guidance, authored candidate faults, browser execution, and credential.</p><Link href="/?play=1">Open mission</Link></article><article><span className="status experimental">Experimental</span><h3>Python</h3><p>A real Pyodide execution lab for queue retries. It does not yet include the full AI oversight learning loop.</p><Link href="/?play=1&incident=python-invoice-queue">Open Python lab</Link></article></div>
     </section>
 
     <section id="start" className="landing-cta" aria-labelledby="start-title">

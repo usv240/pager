@@ -19,7 +19,8 @@ function fileTree(files: Incident["files"]) {
 }
 
 function resultFromOutput(output: string, passed: boolean): TestResult {
-  const testLines = output.split("\n").filter((line) => line.includes("\u2713") || line.includes("\u00d7"));
+  const cleanOutput = output.replace(/\u001B\[[0-?]*[ -/]*[@-~]/g, "");
+  const testLines = cleanOutput.split("\n").filter((line) => line.includes("\u2713") || line.includes("\u00d7"));
   return {
     passed,
     summary: passed ? "The incident test suite passed. The alert is clear." : "The incident test suite found a remaining failure.",

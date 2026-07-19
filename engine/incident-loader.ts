@@ -4,12 +4,13 @@ import { parseManifest } from "@/engine/incident-manifest";
 import type { Incident, IncidentFile, IncidentSummary } from "@/lib/types";
 
 const sourceExtensions = new Set([".ts", ".tsx", ".js", ".json", ".py", ".java", ".c", ".cc", ".cpp", ".h", ".hpp"]);
+const ignoredDirectories = new Set(["node_modules", ".next", "coverage", "dist"]);
 
 async function collectFiles(root: string, current = root): Promise<IncidentFile[]> {
   const entries = await readdir(current, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async (entry) => {
     const entryPath = path.join(current, entry.name);
-    if (entry.isDirectory()) return collectFiles(root, entryPath);
+    if (entry.isDirectory()) return ignoredDirectories.has(entry.name) ? [] : collectFiles(root, entryPath);
     if (!sourceExtensions.has(path.extname(entry.name))) return [];
     return [{ path: path.relative(root, entryPath).replaceAll("\\", "/"), content: await readFile(entryPath, "utf8") }];
   }));
