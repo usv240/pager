@@ -6,7 +6,10 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "vitest run"
+    "build": "tsc --noEmit false --outDir dist",
+    "start": "node dist/server.js",
+    "test": "vitest run",
+    "typecheck": "tsc"
   },
   "dependencies": {
     "express": "^5.1.0"
