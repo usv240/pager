@@ -21,7 +21,7 @@ export async function listIncidents(): Promise<IncidentSummary[]> {
   const incidentDirectories = await readdir(incidentsRoot, { withFileTypes: true });
   return Promise.all(incidentDirectories.filter((entry) => entry.isDirectory()).map(async (entry) => {
     const manifest = parseManifest(JSON.parse(await readFile(path.join(incidentsRoot, entry.name, "manifest.json"), "utf8")));
-    return { id: entry.name, title: manifest.title, language: manifest.execution.language };
+    return { id: entry.name, title: manifest.title, language: manifest.execution.language, availability: manifest.availability };
   }));
 }
 
@@ -39,5 +39,5 @@ export async function loadIncident(requestedId?: string): Promise<Incident> {
   const files = await collectFiles(serviceRoot);
   if (!files.some((file) => file.path === manifest.activeFile)) throw new Error("Incident manifest references a missing active file.");
 
-  return { id: incidentDirectory.name, title: manifest.title, service: manifest.service, severity: manifest.severity, alert: manifest.alert, timeLimitSeconds: manifest.timeLimitSeconds, briefing: manifest.briefing, files, activeFile: manifest.activeFile, execution: manifest.execution };
+  return { id: incidentDirectory.name, title: manifest.title, service: manifest.service, severity: manifest.severity, alert: manifest.alert, timeLimitSeconds: manifest.timeLimitSeconds, availability: manifest.availability, briefing: manifest.briefing, files, activeFile: manifest.activeFile, execution: manifest.execution };
 }

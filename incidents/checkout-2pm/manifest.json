@@ -4,6 +4,7 @@
   "severity": "SEV-1",
   "alert": "A production anomaly is active in checkout-service. Investigate before shipping a fix.",
   "timeLimitSeconds": 1200,
+  "availability": "complete",
   "briefing": {
     "objective": "Contain duplicate checkout charges by tracing what two concurrent requests can observe before either payment completes.",
     "successCriterion": "The concurrency acceptance suite must complete both callers with exactly one Clearwater charge.",

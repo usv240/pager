@@ -7,6 +7,7 @@ export const mockIncident: Incident = {
   severity: "SEV-1",
   alert: "Duplicate payment attempts are spiking — 12 customers may have been charged twice.",
   timeLimitSeconds: 1200,
+  availability: "complete",
   briefing: {
     objective: "Contain duplicate checkout charges by tracing concurrent request behavior.",
     successCriterion: "The checkout suite verifies one charge for concurrent callers.",

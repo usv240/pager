@@ -2,11 +2,12 @@ export type FaultTag = "symptom-not-cause" | "partial-fix" | "new-regression" | 
 export type StakeholderRole = "pm" | "senior" | "ai-pair";
 export type IncidentLanguage = "typescript" | "javascript" | "python" | "java" | "cpp";
 export type IncidentRunner = "webcontainer-node" | "pyodide" | "sandbox-java" | "sandbox-cpp";
+export type IncidentAvailability = "complete" | "experimental";
 export interface IncidentFile { path: string; content: string; }
 export interface IncidentBriefing { objective: string; successCriterion: string; rootCause: string; evidence: string; }
 export interface IncidentExecution { language: IncidentLanguage; runner: IncidentRunner; installCommand?: string[]; testCommand: string[]; }
-export interface Incident { id: string; title: string; service: string; severity: "SEV-1" | "SEV-2" | "SEV-3"; alert: string; timeLimitSeconds: number; briefing: IncidentBriefing; files: IncidentFile[]; activeFile: string; execution: IncidentExecution; }
-export interface IncidentSummary { id: string; title: string; language: IncidentLanguage; }
+export interface Incident { id: string; title: string; service: string; severity: "SEV-1" | "SEV-2" | "SEV-3"; alert: string; timeLimitSeconds: number; availability: IncidentAvailability; briefing: IncidentBriefing; files: IncidentFile[]; activeFile: string; execution: IncidentExecution; }
+export interface IncidentSummary { id: string; title: string; language: IncidentLanguage; availability: IncidentAvailability; }
 export interface FixCandidate { id: string; title: string; rationale: string; faultTag: FaultTag; patch: string; targetFile?: string; }
 export interface StakeholderMessage { id: string; role: StakeholderRole; author: string; body: string; timestamp: string; }
 export interface TestResult { passed: boolean; summary: string; tests: Array<{ name: string; passed: boolean; detail: string }>; }

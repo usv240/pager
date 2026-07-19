@@ -4,6 +4,7 @@
   "severity": "SEV-2",
   "alert": "Duplicate invoice work items are appearing after a retry.",
   "timeLimitSeconds": 900,
+  "availability": "experimental",
   "briefing": {
     "objective": "Trace why a retry can enqueue the same invoice work item more than once.",
     "successCriterion": "The Python unittest suite must show that each invoice appears only once after retries.",
