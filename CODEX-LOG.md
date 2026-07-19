@@ -67,6 +67,12 @@ _(entries added as we build)_
 - **Where it accelerated us:** Preserved a fully playable mocked end-to-end loop while the live agent layer is developed independently.
 - **Key decisions we made (human):** Make only the verified recommendation executable; keep symptom-only proposals reviewable but non-applying; use the incident's real concurrency suite as the final authority.
 - **GPT-5.6 usage:** Codex translated the accepted concurrency strategy into the mock repair; it does not determine whether that repair passes.
+
+## Task 10 — Deployment artifact tracing
+- **What Codex did:** Configured narrow Next.js output-file-tracing includes for the dynamic incident API routes and verified the production trace contains mission artifacts.
+- **Where it accelerated us:** Prevented a deploy-only failure where serverless functions could load route code but not the mission files discovered at runtime.
+- **Key decisions we made (human):** Keep dynamic mission artifacts server-side; include only `incidents/` for the two API routes rather than broad deployment globs.
+- **GPT-5.6 usage:** Codex identified the runtime packaging risk, applied the route-level configuration, and verified the generated trace.
 **Task 1 — The 2 PM Incident target codebase**
 - **What Codex did:** Authored the generation spec for the checkout incident; built the minimal deterministic kernel around the checkout, order repository, and Clearwater Payments adapter; verified the full fix triangle by temporarily applying the symptom-only patch and the atomic-claim repair, running the tests at each state, and restoring the baseline; then expanded the kernel into a 2,519-line Node 20, TypeScript, Express, and Vitest service with domain, repository, service, route, middleware, fixture, and test layers. Codex ran strict typechecking and the complete suite, confirmed 17 ordinary tests pass while the acceptance test alone fails with one `PAYMENT_GATEWAY_ERROR` rejection and two ledger charges, kept the runtime below 10 seconds, and verified the four frozen kernel files remained byte-identical during expansion.
 - **Where it accelerated us:** Turned the incident design into an implementation-ready specification, produced the realistic service structure and deterministic seeded behavior, authored the ordinary verification suite, exercised plausible repair candidates against the same acceptance criteria, and repeatedly audited types, runtime, codebase size, concealment requirements, and frozen-file integrity without requiring manual scaffolding or test triage.
