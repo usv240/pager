@@ -41,6 +41,16 @@ Real incident platforms such as Rootly and FireHydrant coordinate responders, au
 | P1 | Add incident content metadata and debrief copy to the manifest | Subbu | Content lives with the incident, not hardcoded into UI components. |
 | P2 | Record 3-minute demo and publish Devpost materials | Ujwal + Subbu | Shows the full loop, Codex/GPT-5.6 collaboration, repo, deployed URL, and `/feedback` session ID. |
 
+## Subbu handoff — July 19, 2026
+
+**Deliver by end of day:**
+
+1. Add three authored AI-pair candidate diffs for `checkout-2pm`: one verified repair and two plausible but flawed repairs.
+2. Keep each candidate's `faultTag` and teaching explanation hidden from the learner-facing recommendation; expose them only after the learner records a decision.
+3. Add PM and Senior Engineer incident messages that create pressure and provide Socratic context without revealing the root cause.
+4. Add five fixed eval cases in `evals/` proving that the flawed repairs fail the real acceptance behavior and the verified repair passes.
+5. Push the content-only branch and share its commit SHA with Ujwal for integration and the end-to-end browser smoke test.
+
 ## Definition of done
 
 The default Pager route opens one complete TypeScript mission. A judge can understand the goal in seconds, make a genuinely uncertain AI-oversight decision, inspect and modify real code, execute a real acceptance suite, receive a concise debrief, and reach a credential only through verified evidence.
