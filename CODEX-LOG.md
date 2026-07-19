@@ -12,6 +12,19 @@
 
 ---
 
+_(entries added as we build)_
+
+## Task 1 — Mock war-room foundation
+- **What Codex did:** Scaffolded the strict Next.js app, shared integration contract, deterministic mock verification, and the clickable "2 PM Incident" workbench.
+- **Where it accelerated us:** Turned the product brief into a runnable, contract-first vertical slice without waiting for live models or WebContainers.
+- **Key decisions we made (human):** Keep verification deterministic, make incorrect AI fixes visibly reviewable before they are applied, and reserve `lib/agents` and `incidents/` for Subbu.
+- **GPT-5.6 usage:** Codex used for implementation; runtime model integration remains deliberately mocked during this task.
+
+## Task 2 — Artifact-driven verification
+- **What Codex did:** Replaced the embedded example source with a runtime loader for the committed incident artifact and added a WebContainer-backed test runner.
+- **Where it accelerated us:** Preserved one source of truth for the incident while making test results derive from the incident's own `npm test` command.
+- **Key decisions we made (human):** Keep mission content in `incidents/`; keep Pager's UI and execution engine generic; use test exit status—not model judgment or source-string matching—for credentials.
+- **GPT-5.6 usage:** Codex implemented the browser execution boundary; GPT-powered agents remain behind the existing interface until Subbu's agent layer is ready.
 **Task 1 — The 2 PM Incident target codebase**
 - **What Codex did:** Authored the generation spec for the checkout incident; built the minimal deterministic kernel around the checkout, order repository, and Clearwater Payments adapter; verified the full fix triangle by temporarily applying the symptom-only patch and the atomic-claim repair, running the tests at each state, and restoring the baseline; then expanded the kernel into a 2,519-line Node 20, TypeScript, Express, and Vitest service with domain, repository, service, route, middleware, fixture, and test layers. Codex ran strict typechecking and the complete suite, confirmed 17 ordinary tests pass while the acceptance test alone fails with one `PAYMENT_GATEWAY_ERROR` rejection and two ledger charges, kept the runtime below 10 seconds, and verified the four frozen kernel files remained byte-identical during expansion.
 - **Where it accelerated us:** Turned the incident design into an implementation-ready specification, produced the realistic service structure and deterministic seeded behavior, authored the ordinary verification suite, exercised plausible repair candidates against the same acceptance criteria, and repeatedly audited types, runtime, codebase size, concealment requirements, and frozen-file integrity without requiring manual scaffolding or test triage.
