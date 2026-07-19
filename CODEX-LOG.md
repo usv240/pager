@@ -73,6 +73,12 @@ _(entries added as we build)_
 - **Where it accelerated us:** Prevented a deploy-only failure where serverless functions could load route code but not the mission files discovered at runtime.
 - **Key decisions we made (human):** Keep dynamic mission artifacts server-side; include only `incidents/` for the two API routes rather than broad deployment globs.
 - **GPT-5.6 usage:** Codex identified the runtime packaging risk, applied the route-level configuration, and verified the generated trace.
+
+## Task 11 — Verification failure feedback
+- **What Codex did:** Added explicit runner-error state to the mission workbench and cleared stale completion state before every verification attempt.
+- **Where it accelerated us:** Makes browser-runtime, dependency, and sandbox setup failures visible to a judge or learner instead of leaving the verification button without an explanation.
+- **Key decisions we made (human):** Keep real test output authoritative; distinguish a failed test result from an unavailable execution runtime.
+- **GPT-5.6 usage:** Codex implemented and production-built the UI error boundary; no model output controls verification.
 **Task 1 — The 2 PM Incident target codebase**
 - **What Codex did:** Authored the generation spec for the checkout incident; built the minimal deterministic kernel around the checkout, order repository, and Clearwater Payments adapter; verified the full fix triangle by temporarily applying the symptom-only patch and the atomic-claim repair, running the tests at each state, and restoring the baseline; then expanded the kernel into a 2,519-line Node 20, TypeScript, Express, and Vitest service with domain, repository, service, route, middleware, fixture, and test layers. Codex ran strict typechecking and the complete suite, confirmed 17 ordinary tests pass while the acceptance test alone fails with one `PAYMENT_GATEWAY_ERROR` rejection and two ledger charges, kept the runtime below 10 seconds, and verified the four frozen kernel files remained byte-identical during expansion.
 - **Where it accelerated us:** Turned the incident design into an implementation-ready specification, produced the realistic service structure and deterministic seeded behavior, authored the ordinary verification suite, exercised plausible repair candidates against the same acceptance criteria, and repeatedly audited types, runtime, codebase size, concealment requirements, and frozen-file integrity without requiring manual scaffolding or test triage.
