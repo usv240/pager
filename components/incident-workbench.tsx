@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { WebContainer } from "@webcontainer/api";
+import { useRouter } from "next/navigation";
+import { saveCredentialSession } from "@/engine/credential-session";
 import { runTests } from "@/engine/run-tests";
 import { mintCredential, proposeFix } from "@/lib";
 import { mockMessages } from "@/lib/mocks/agents";
@@ -9,12 +11,13 @@ import type { FixCandidate, Incident, TestResult } from "@/lib/types";
 
 export function IncidentWorkbench() {
   const webcontainerRef = useRef<WebContainer | null>(null);
+  const router = useRouter();
   const [incident, setIncident] = useState<Incident>();
   const [files, setFiles] = useState<Incident["files"]>([]);
   const [activeFile, setActiveFile] = useState("");
   const [selectedFixes, setSelectedFixes] = useState<string[]>([]);
   const [result, setResult] = useState<TestResult>();
-  const [credentialOpen, setCredentialOpen] = useState(false);
+  const [completionMessage, setCompletionMessage] = useState("");
   const [running, setRunning] = useState(false);
 
   useEffect(() => {
@@ -44,15 +47,20 @@ export function IncidentWorkbench() {
       const execution = await runTests(activeIncident, source, webcontainerRef.current);
       webcontainerRef.current = execution.runtime;
       setResult(execution.result);
-      if (execution.result.passed) setCredentialOpen(true);
+      const caughtIncorrectAiFix = selectedFixes.some((id) => id !== "atomic-payment");
+      if (execution.result.passed && caughtIncorrectAiFix) {
+        const credential = mintCredential({ incidentId: activeIncident.id, startedAt: "", selectedFixIds: selectedFixes, caughtIncorrectAiFix, testResult: execution.result });
+        saveCredentialSession({ credential, incidentTitle: activeIncident.title, caughtIncorrectAiFix, testResult: execution.result });
+        router.push("/credential");
+      } else if (execution.result.passed) {
+        setCompletionMessage("Tests passed. Review and reject an incorrect AI recommendation to mint the credential.");
+      }
     } finally {
       setRunning(false);
     }
   };
 
   if (!incident) return <main className="shell"><p>Loading incident artifact…</p></main>;
-  const credential = mintCredential({ incidentId: incident.id, startedAt: "", selectedFixIds: selectedFixes, caughtIncorrectAiFix: selectedFixes.some((id) => id !== "atomic-payment"), testResult: result });
-
   return <main className="shell">
     <header className="topbar"><div><span className="brand">PAGER</span><span className="environment">production / {incident.service}</span></div><span className="timer">02:14 elapsed</span></header>
     <section className={result?.passed ? "alert cleared" : "alert"}><strong>{result?.passed ? "RESOLVED" : `${incident.severity} · INCIDENT`}</strong><span>{result?.passed ? "The incident has cleared." : incident.alert}</span></section>
@@ -65,6 +73,6 @@ export function IncidentWorkbench() {
       </aside>
     </div>
     {result && <section className="test-panel"><strong>VERIFICATION OUTPUT</strong>{result.tests.map((test) => <div key={test.name}><span className={test.passed ? "pass" : "fail"}>{test.passed ? "PASS" : "FAIL"}</span><span>{test.name}</span><em>{test.detail}</em></div>)}</section>}
-    {credentialOpen && <section className="credential" role="status"><button aria-label="Close credential" onClick={() => setCredentialOpen(false)}>×</button><span>EXECUTION-VERIFIED</span><h2>{credential.title}</h2><p>{credential.summary}</p><small>Issued {credential.issuedAt} · Mission: {incident.title}</small></section>}
+    {completionMessage && <p className="completion-message" role="status">{completionMessage}</p>}
   </main>;
 }
