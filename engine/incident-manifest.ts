@@ -1,4 +1,4 @@
-import type { IncidentExecution, IncidentLanguage, IncidentRunner } from "@/lib/types";
+import type { IncidentBriefing, IncidentExecution, IncidentLanguage, IncidentRunner } from "@/lib/types";
 
 export interface IncidentManifest {
   title: string;
@@ -6,6 +6,7 @@ export interface IncidentManifest {
   severity: "SEV-1" | "SEV-2" | "SEV-3";
   alert: string;
   timeLimitSeconds: number;
+  briefing: IncidentBriefing;
   serviceDirectory: string;
   activeFile: string;
   execution: IncidentExecution;
@@ -17,9 +18,10 @@ const runners = new Set<IncidentRunner>(["webcontainer-node", "pyodide", "sandbo
 export function parseManifest(value: unknown): IncidentManifest {
   if (!value || typeof value !== "object") throw new Error("Incident manifest must be an object.");
   const manifest = value as Partial<IncidentManifest>;
-  if (!manifest.title || !manifest.service || !manifest.severity || !manifest.alert || !manifest.timeLimitSeconds || !manifest.serviceDirectory || !manifest.activeFile || !manifest.execution) throw new Error("Incident manifest is missing required fields.");
+  if (!manifest.title || !manifest.service || !manifest.severity || !manifest.alert || !manifest.timeLimitSeconds || !manifest.briefing || !manifest.serviceDirectory || !manifest.activeFile || !manifest.execution) throw new Error("Incident manifest is missing required fields.");
   const { execution } = manifest;
   if (!languages.has(execution.language) || !runners.has(execution.runner) || !Array.isArray(execution.testCommand)) throw new Error("Incident manifest has an invalid execution configuration.");
   if (!Number.isInteger(manifest.timeLimitSeconds) || manifest.timeLimitSeconds < 1) throw new Error("Incident manifest has an invalid time limit.");
+  if (!manifest.briefing.objective || !manifest.briefing.successCriterion || !manifest.briefing.rootCause || !manifest.briefing.evidence) throw new Error("Incident manifest has an invalid briefing.");
   return manifest as IncidentManifest;
 }

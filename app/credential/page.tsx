@@ -22,6 +22,7 @@ export default function CredentialPage() {
       <div><dt>AI oversight</dt><dd>{session.caughtIncorrectAiFix ? "Rejected an incorrect AI recommendation" : "Not recorded"}</dd></div>
       <div><dt>Issued</dt><dd>{session.credential.issuedAt}</dd></div>
     </dl>
+    <section className="credential-debrief" aria-label="Incident debrief"><span>INCIDENT DEBRIEF</span><h2>What execution proved</h2><p><strong>Root cause:</strong> {session.briefing.rootCause}</p><p><strong>Evidence:</strong> {session.briefing.evidence}</p></section>
     <Link className="verify" href="/">Start another incident</Link>
   </main>;
 }

@@ -4,6 +4,12 @@
   "severity": "SEV-1",
   "alert": "A production anomaly is active in checkout-service. Investigate before shipping a fix.",
   "timeLimitSeconds": 1200,
+  "briefing": {
+    "objective": "Contain duplicate checkout charges by tracing what two concurrent requests can observe before either payment completes.",
+    "successCriterion": "The concurrency acceptance suite must complete both callers with exactly one Clearwater charge.",
+    "rootCause": "Both requests read the same pending order, then each created an external charge before either could complete the strict state transition.",
+    "evidence": "The decisive check compares the two settled checkout results with the ledger count; response handling alone cannot undo a charge already created."
+  },
   "serviceDirectory": "checkout-service",
   "activeFile": "src/services/checkout-service.ts",
   "execution": {
