@@ -1,0 +1,14 @@
+{
+  "title": "The 2 PM Incident",
+  "service": "checkout-service",
+  "severity": "SEV-1",
+  "alert": "A production anomaly is active in checkout-service. Investigate before shipping a fix.",
+  "serviceDirectory": "checkout-service",
+  "activeFile": "src/services/checkout-service.ts",
+  "execution": {
+    "language": "typescript",
+    "runner": "webcontainer-node",
+    "installCommand": ["npm", "install"],
+    "testCommand": ["npm", "test"]
+  }
+}

@@ -44,7 +44,7 @@ export function IncidentWorkbench() {
     if (!activeIncident || running) return;
     setRunning(true);
     try {
-      const execution = await runTests(activeIncident, source, webcontainerRef.current);
+      const execution = await runTests(activeIncident, webcontainerRef.current);
       webcontainerRef.current = execution.runtime;
       setResult(execution.result);
       const caughtIncorrectAiFix = selectedFixes.some((id) => id !== "atomic-payment");
