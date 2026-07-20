@@ -504,7 +504,7 @@ export function IncidentWorkbench() {
         <div className="workspace-topbar-actions">
           <InfoTip label="About this simulator">Pager pairs an incident coach with real code and deterministic tests. Use AI Pair to investigate; use the acceptance suite to validate a repair.</InfoTip>
           <button className="workspace-guide-trigger workspace-focus-trigger" onClick={() => setFocusMode((current) => !current)} aria-pressed={focusMode} title="Hide or restore the context rails">{focusMode ? "Exit focus" : "Focus code"}</button>
-          <button className="workspace-guide-trigger" onClick={() => setGuideOpen(true)}>Guided practice</button>{intelligencePaneMode === "minimized" && <button className="workspace-guide-trigger" onClick={() => setIntelligencePaneMode("default")}>Open intelligence</button>}
+          <button className="workspace-guide-trigger" onClick={() => setGuideOpen(true)}>Guided practice</button>{intelligencePaneMode === "minimized" && <button className="workspace-guide-trigger workspace-intelligence-restore" type="button" onClick={() => setIntelligencePaneMode("default")} aria-label="Restore incident intelligence panel" title="Restore the hidden Incident Intelligence panel"><span aria-hidden="true">↗</span>Open intelligence</button>}
           <ThemeToggle />
           <IncidentClock timeLimitSeconds={incident.timeLimitSeconds} />
         </div>
