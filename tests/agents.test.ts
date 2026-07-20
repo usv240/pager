@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+﻿import { afterEach, describe, expect, test, vi } from "vitest";
 import { checkout2pmCandidates } from "../lib/agents/candidates/checkout-2pm";
 import { candidatesForFiles } from "../lib/agents/candidates";
 import { pythonInvoiceQueueCandidates } from "../lib/agents/candidates/python-invoice-queue";
 import { pythonInventoryReservationCandidates } from "../lib/agents/candidates/python-inventory-reservation";
+import { pythonSettlementReplayCandidates } from "../lib/agents/candidates/python-settlement-replay";
 import { typescriptWebhookReplayCandidates } from "../lib/agents/candidates/typescript-webhook-replay";
 import { requestAgentText } from "../lib/agents/openai";
 import { mayaMessages } from "../lib/agents/personas/maya";
@@ -107,6 +108,14 @@ describe("additional verified-lab candidates", () => {
     }
   });
 
+  test("selects complete authored repairs for advanced settlement replays", () => {
+    expect(candidatesForFiles(["src/replay_service.py"])).toEqual(pythonSettlementReplayCandidates);
+    expect(pythonSettlementReplayCandidates).toHaveLength(3);
+    for (const candidate of pythonSettlementReplayCandidates) {
+      expect(candidate.targetFile).toBe("src/replay_service.py");
+      expect(candidate.patch).toContain("class ReplayService");
+    }
+  });
   test("selects complete authored repairs for webhook replays", () => {
     expect(candidatesForFiles(["src/event_ledger.ts"])).toEqual(typescriptWebhookReplayCandidates);
     expect(typescriptWebhookReplayCandidates).toHaveLength(3);

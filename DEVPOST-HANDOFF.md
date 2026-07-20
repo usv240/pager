@@ -20,8 +20,8 @@ Pager is an execution-verified incident simulator for developers working beside 
 
 - Next.js App Router, TypeScript, Monaco, WebContainers, and Pyodide
 - Manifest-owned incident artifacts, telemetry, briefs, and stakeholder context
-- Optional OpenAI AI Pair for scoped questions; deterministic execution remains the grading authority
-- Two complete missions: Python queue retry and TypeScript checkout race
+- Optional OpenAI Coach for scoped questions; authored repair options and deterministic execution remain the learning and grading authority
+- Five execution-verified incidents across easy-to-advanced Python and TypeScript practice paths
 - Isolated candidate proof scripts for both languages
 
 ## Honest limitations

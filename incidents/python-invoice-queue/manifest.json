@@ -1,5 +1,6 @@
 {
   "title": "The Invoice Queue Retry",
+  "difficulty": "easy",
   "service": "invoice-queue",
   "severity": "SEV-2",
   "alert": "Duplicate invoice work items are appearing after a retry.",
@@ -14,26 +15,83 @@
   "telemetry": {
     "impact": "Retry traffic is creating duplicate invoice work and delaying reconciliation.",
     "services": [
-      { "name": "invoice-queue", "status": "degraded" },
-      { "name": "retry-worker", "status": "investigating" },
-      { "name": "reconciliation", "status": "healthy" }
+      {
+        "name": "invoice-queue",
+        "status": "degraded"
+      },
+      {
+        "name": "retry-worker",
+        "status": "investigating"
+      },
+      {
+        "name": "reconciliation",
+        "status": "healthy"
+      }
     ],
     "events": [
-      { "timestamp": "10:12", "source": "Alerting", "message": "Invoice queue depth grew faster than successful processing." },
-      { "timestamp": "10:15", "source": "Worker", "message": "The same invoice ID was accepted after a retry." },
-      { "timestamp": "10:18", "source": "Ledger", "message": "Reconciliation found repeated pending work for one invoice." }
+      {
+        "timestamp": "10:12",
+        "source": "Alerting",
+        "message": "Invoice queue depth grew faster than successful processing."
+      },
+      {
+        "timestamp": "10:15",
+        "source": "Worker",
+        "message": "The same invoice ID was accepted after a retry."
+      },
+      {
+        "timestamp": "10:18",
+        "source": "Ledger",
+        "message": "Reconciliation found repeated pending work for one invoice."
+      }
     ]
   },
   "stakeholderMessages": [
-    { "id": "maya-python", "role": "pm", "author": "Maya - PM", "body": "Reconciliation is delayed by duplicate invoice work. Can we contain retries before the next settlement run?", "timestamp": "10:20" },
-    { "id": "jon-python", "role": "senior", "author": "Jon - Senior Eng", "body": "Before changing ordering, what invariant should remain true when the same invoice is retried?", "timestamp": "10:22" },
-    { "id": "pair-python", "role": "ai-pair", "author": "AI Pair", "body": "I found three plausible queue changes. I would trace membership separately from presentation before choosing one.", "timestamp": "10:23" }
+    {
+      "id": "finance-invoice",
+      "role": "finance",
+      "author": "Lena - Finance",
+      "body": "The settlement batch is waiting on reconciliation. We see one invoice represented by several pending work items, not several invoices.",
+      "timestamp": "10:19"
+    },
+    {
+      "id": "maya-python",
+      "role": "pm",
+      "author": "Maya - PM",
+      "body": "Reconciliation is delayed by duplicate invoice work. Can we contain retries before the next settlement run?",
+      "timestamp": "10:20"
+    },
+    {
+      "id": "sre-python",
+      "role": "sre",
+      "author": "Ash - On-call",
+      "body": "Queue depth grew after retry-worker acknowledgements timed out. The duplicate IDs are byte-for-byte identical.",
+      "timestamp": "10:21"
+    },
+    {
+      "id": "jon-python",
+      "role": "senior",
+      "author": "Jon - Senior Eng",
+      "body": "Before changing ordering, what invariant should remain true when the same invoice is retried?",
+      "timestamp": "10:22"
+    },
+    {
+      "id": "pair-python",
+      "role": "ai-pair",
+      "author": "AI Pair",
+      "body": "I prepared three queue changes. Trace queue membership separately from display order before selecting one.",
+      "timestamp": "10:23"
+    }
   ],
   "serviceDirectory": "invoice-queue",
   "activeFile": "src/invoice_queue.py",
   "execution": {
     "language": "python",
     "runner": "pyodide",
-    "testCommand": ["unittest", "discover", "tests"]
+    "testCommand": [
+      "unittest",
+      "discover",
+      "tests"
+    ]
   }
 }

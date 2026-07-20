@@ -9,8 +9,11 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test:agents": "vitest run tests/agents.test.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "verify:candidates": "tsx scripts/verify-candidates.ts",
     "verify:python-candidates": "tsx scripts/verify-python-candidates.ts",
+    "verify:python-progression": "tsx scripts/verify-python-progressions.ts",
     "verify:expanded-candidates": "tsx scripts/verify-expanded-candidates.ts"
   },
   "dependencies": {
@@ -19,14 +22,15 @@
     "@types/react": "19.1.2",
     "@types/react-dom": "19.1.2",
     "@webcontainer/api": "^1.6.4",
-    "monaco-editor": "^0.55.1",
-    "next": "^15.3.8",
+    "monaco-editor": "^0.56.0",
+    "next": "^15.5.18",
     "react": "^19.1.2",
     "react-dom": "^19.1.2",
     "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.1",
+    "@playwright/test": "^1.61.1",
     "eslint": "8.57.0",
     "eslint-config-next": "^15.3.8",
     "tsx": "^4.20.3",

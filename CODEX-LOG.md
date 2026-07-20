@@ -95,7 +95,7 @@ _(entries added as we build)_
 ## Task 14 — Neutral AI-oversight decisions
 - **What Codex did:** Audited Pager against incident-response and hands-on learning products, documented the v1 product target, and replaced answer-leaking recommendation controls with a neutral review-and-decision flow.
 - **Where it accelerated us:** Identified that exposing `verified` and fault tags to learners invalidated Pager's core assessment, then converted the finding into a buildable ownership plan and accessible UI state.
-- **Key decisions we made (human):** Learners decide before receiving teaching feedback; only execution determines whether the repair resolves the incident; the current v1 remains one complete TypeScript mission.
+- **Key decisions we made (human):** Learners decide before receiving teaching feedback; only execution determines whether the repair resolves the incident; at this stage, the checkout incident was the first complete TypeScript mission. This scope was later expanded with verified Python progression labs and a second TypeScript lab.
 - **GPT-5.6 usage:** Codex supported the product audit and implementation; runtime verification remains deterministic and no model labels a learner's answer correct.
 
 ## Task 15 — Phase-driven stakeholder channel
@@ -113,7 +113,7 @@ _(entries added as we build)_
 ## Task 17 — Honest mission readiness
 - **What Codex did:** Added manifest-owned mission availability and surfaced it in the incident selector.
 - **Where it accelerated us:** Prevented the experimental Python runner from being mistaken for a finished learner path while preserving the language-runner architecture for future work.
-- **Key decisions we made (human):** The TypeScript checkout mission is the complete judge path; experimental missions remain discoverable but explicitly labeled until their full agent and evaluation content exists.
+- **Key decisions we made (human):** At this stage, the TypeScript checkout mission was the complete judge path; later work promoted Python labs through verified easy/medium/advanced progression and added a second TypeScript lab.
 - **GPT-5.6 usage:** Codex implemented the manifest contract and UI boundary; readiness is deterministic product metadata, not a model claim.
 
 ## Task 18 — Decision-gated teaching reveal
@@ -146,3 +146,9 @@ _(entries added as we build)_
 - **Where it accelerated us:** Makes the proof claim reproducible: flawed repairs must fail, while the verified repair must pass, before a recommendation is presented to a learner.
 - **Key decisions we made (human):** Keep verification temporary files inside the repository's ignored workspace so the checker is reliable on Windows and does not rely on protected system temp paths.
 - **GPT-5.6 usage:** None determines the verification result; these scripts execute the real incident suites.
+
+## Task 21 - Verified multi-incident progression
+- **What Codex did:** Expanded Pager's manifest-owned fixture catalog into five execution-verified incidents: three Python labs covering easy, medium, and advanced reasoning plus two TypeScript labs. It added the Python progression verifier, incident-specific stakeholder threads, operational signals, richer fixture trees, and catalog filtering.
+- **Where it accelerated us:** Reused the established runner, candidate, manifest, and evidence contracts so the expanded practice path remained deterministic rather than becoming a collection of static demos.
+- **Key decisions we made (human):** Keep Python and TypeScript/JavaScript as the only supported languages because both have real browser runners; group labs by language and difficulty; keep Java/C++ marked as future work until we can provide isolated execution; give each incident distinct context and acceptance criteria rather than reusing one chat script.
+- **GPT-5.6 usage:** Codex helped implement and validate the content architecture. Repair candidates, test fixtures, credential eligibility, and pass/fail outcomes remain authored and deterministic. The optional Coach receives bounded incident context and is not allowed to disclose the answer.

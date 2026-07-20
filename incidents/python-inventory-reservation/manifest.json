@@ -1,5 +1,6 @@
 {
   "title": "The Inventory Reservation Retry",
+  "difficulty": "medium",
   "service": "inventory-reservation",
   "severity": "SEV-2",
   "alert": "Repeated reservation requests are exhausting available stock.",
@@ -14,26 +15,83 @@
   "telemetry": {
     "impact": "Available inventory is falling faster than completed orders, causing unnecessary out-of-stock warnings.",
     "services": [
-      { "name": "inventory-reservation", "status": "degraded" },
-      { "name": "checkout-worker", "status": "investigating" },
-      { "name": "catalog", "status": "healthy" }
+      {
+        "name": "inventory-reservation",
+        "status": "degraded"
+      },
+      {
+        "name": "checkout-worker",
+        "status": "investigating"
+      },
+      {
+        "name": "catalog",
+        "status": "healthy"
+      }
     ],
     "events": [
-      { "timestamp": "11:04", "source": "Alerting", "message": "Reservation count diverged from unique checkout orders." },
-      { "timestamp": "11:07", "source": "Worker", "message": "Order ord-102 retried after a gateway timeout." },
-      { "timestamp": "11:09", "source": "Inventory", "message": "The ledger recorded two holds for ord-102." }
+      {
+        "timestamp": "11:04",
+        "source": "Alerting",
+        "message": "Reservation count diverged from unique checkout orders."
+      },
+      {
+        "timestamp": "11:07",
+        "source": "Worker",
+        "message": "Order ord-102 retried after a gateway timeout."
+      },
+      {
+        "timestamp": "11:09",
+        "source": "Inventory",
+        "message": "The ledger recorded two holds for ord-102."
+      }
     ]
   },
   "stakeholderMessages": [
-    { "id": "maya-reservation", "role": "pm", "author": "Maya - PM", "body": "Customers are seeing items marked unavailable while checkout is still retrying. Can we stop the extra holds without dropping valid orders?", "timestamp": "11:10" },
-    { "id": "jon-reservation", "role": "senior", "author": "Jon - Senior Eng", "body": "What property must hold for one order across a retry, and what must remain true for a different order?", "timestamp": "11:12" },
-    { "id": "pair-reservation", "role": "ai-pair", "author": "AI Pair", "body": "I found three ways to change reservation handling. I would separate duplicate membership from display order before selecting one.", "timestamp": "11:13" }
+    {
+      "id": "support-reservation",
+      "role": "support",
+      "author": "Inez - Support",
+      "body": "Customers can see an item marked unavailable, refresh, and then see stock again. The affected orders all share retry attempts.",
+      "timestamp": "11:09"
+    },
+    {
+      "id": "maya-reservation",
+      "role": "pm",
+      "author": "Maya - PM",
+      "body": "Customers are seeing items marked unavailable while checkout is still retrying. Can we stop extra holds without dropping valid orders?",
+      "timestamp": "11:10"
+    },
+    {
+      "id": "sre-reservation",
+      "role": "sre",
+      "author": "Dev - SRE",
+      "body": "Reservation growth is outpacing successful checkout completions. ord-102 appears twice, while ord-103 must stay independent.",
+      "timestamp": "11:11"
+    },
+    {
+      "id": "jon-reservation",
+      "role": "senior",
+      "author": "Jon - Senior Eng",
+      "body": "What property must hold for one order across a retry, and what must remain true for a different order?",
+      "timestamp": "11:12"
+    },
+    {
+      "id": "pair-reservation",
+      "role": "ai-pair",
+      "author": "AI Pair",
+      "body": "I prepared three reservation changes. Compare duplicate membership with reservation ordering before choosing a diff.",
+      "timestamp": "11:13"
+    }
   ],
   "serviceDirectory": "inventory-reservation",
   "activeFile": "src/reservation_book.py",
   "execution": {
     "language": "python",
     "runner": "pyodide",
-    "testCommand": ["unittest", "discover", "tests"]
+    "testCommand": [
+      "unittest",
+      "discover",
+      "tests"
+    ]
   }
 }

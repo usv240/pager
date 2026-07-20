@@ -1,4 +1,4 @@
-import type { Incident, TestResult } from "@/lib/types";
+﻿import type { Incident, TestResult } from "@/lib/types";
 
 const runtimeIndexUrl = "https://cdn.jsdelivr.net/pyodide/v314.0.2/full/";
 
@@ -63,11 +63,18 @@ export async function runPyodide(incident: Incident, runtime: PyodideRuntime | n
   setupFiles(pyodide, incident);
   try {
     await pyodide.runPythonAsync(`
+import importlib
 import os
 import sys
 import unittest
 os.chdir("/")
-sys.path.insert(0, "/src")
+if "/src" not in sys.path:
+    sys.path.insert(0, "/src")
+importlib.invalidate_caches()
+for module_name, module in list(sys.modules.items()):
+    module_path = getattr(module, "__file__", "") or ""
+    if module_path.startswith("/src/") or module_path.startswith("/tests/"):
+        del sys.modules[module_name]
 loader = unittest.defaultTestLoader
 suite = loader.discover(${JSON.stringify(incident.execution.testCommand.at(-1) ?? "tests")})
 result = unittest.TextTestRunner(verbosity=2).run(suite)

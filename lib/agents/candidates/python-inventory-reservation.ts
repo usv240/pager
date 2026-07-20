@@ -1,4 +1,4 @@
-import type { AuthoredFixCandidate } from "./checkout-2pm";
+﻿import type { AuthoredFixCandidate } from "./checkout-2pm";
 
 const targetFile = "src/reservation_book.py";
 
@@ -10,15 +10,18 @@ export const pythonInventoryReservationCandidates = [
     faultTag: "symptom-not-cause",
     targetFile,
     teaching: "Normalization can help with formatting variants, but the exact same order ID is still appended twice on retry. The duplicate-reservation invariant remains broken.",
-    patch: `class ReservationBook:
-    def __init__(self):
-        self._reservations = []
+    patch: `from reservation_ledger import ReservationLedger
+
+
+class ReservationBook:
+    def __init__(self, ledger: ReservationLedger | None = None):
+        self._ledger = ledger or ReservationLedger()
 
     def reserve(self, order_id: str) -> None:
-        self._reservations.append(order_id.strip())
+        self._ledger.append(order_id.strip())
 
     def reserved_orders(self) -> list[str]:
-        return list(self._reservations)
+        return self._ledger.orders()
 `,
   },
   {
@@ -27,35 +30,41 @@ export const pythonInventoryReservationCandidates = [
     rationale: "Sort the reservation ledger when it is read so operations sees a stable order while retries are arriving.",
     faultTag: "partial-fix",
     targetFile,
-    teaching: "Sorting changes display order, not ledger membership. The duplicate reservation is still present and sorting also violates first-reservation order.",
-    patch: `class ReservationBook:
-    def __init__(self):
-        self._reservations = []
+    teaching: "Sorting changes display order, not ledger membership. The duplicate reservation remains and the workflow loses first-reservation ordering.",
+    patch: `from reservation_ledger import ReservationLedger
+
+
+class ReservationBook:
+    def __init__(self, ledger: ReservationLedger | None = None):
+        self._ledger = ledger or ReservationLedger()
 
     def reserve(self, order_id: str) -> None:
-        self._reservations.append(order_id)
+        self._ledger.append(order_id)
 
     def reserved_orders(self) -> list[str]:
-        return sorted(self._reservations)
+        return sorted(self._ledger.orders())
 `,
   },
   {
     id: "guard-existing-reservation",
     title: "Keep one reservation per order",
-    rationale: "Only add an order to the reservation ledger when it is not already present. A retry then joins the existing hold while a new order remains independent.",
+    rationale: "Check the reservation ledger before appending a hold so retries join the existing order while new orders remain independent.",
     faultTag: "verified",
     targetFile,
-    teaching: "The ledger now has one entry per order and keeps the original reservation order. Repeated retries no longer consume extra inventory.",
-    patch: `class ReservationBook:
-    def __init__(self):
-        self._reservations = []
+    teaching: "The ledger now has one entry per order and keeps the original reservation order. Retries no longer consume extra inventory across the full workflow.",
+    patch: `from reservation_ledger import ReservationLedger
+
+
+class ReservationBook:
+    def __init__(self, ledger: ReservationLedger | None = None):
+        self._ledger = ledger or ReservationLedger()
 
     def reserve(self, order_id: str) -> None:
-        if order_id not in self._reservations:
-            self._reservations.append(order_id)
+        if not self._ledger.contains(order_id):
+            self._ledger.append(order_id)
 
     def reserved_orders(self) -> list[str]:
-        return list(self._reservations)
+        return self._ledger.orders()
 `,
   },
 ] as const satisfies readonly AuthoredFixCandidate[];

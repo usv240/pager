@@ -1,8 +1,9 @@
 {
   "title": "The 2 PM Incident",
+  "difficulty": "advanced",
   "service": "checkout-service",
   "severity": "SEV-1",
-  "alert": "Checkout 502s are spiking and support has multiple duplicate-charge reports — customers may be paying twice for one order.",
+  "alert": "Checkout 502s are spiking and support has multiple duplicate-charge reports \u00e2\u20ac\u201d customers may be paying twice for one order.",
   "timeLimitSeconds": 1200,
   "availability": "complete",
   "briefing": {
@@ -14,27 +15,86 @@
   "telemetry": {
     "impact": "Three customer duplicate-charge reports; support is holding replies pending containment.",
     "services": [
-      { "name": "checkout-service", "status": "degraded" },
-      { "name": "clearwater-payments", "status": "investigating" },
-      { "name": "order-ledger", "status": "healthy" }
+      {
+        "name": "checkout-service",
+        "status": "degraded"
+      },
+      {
+        "name": "clearwater-payments",
+        "status": "investigating"
+      },
+      {
+        "name": "order-ledger",
+        "status": "healthy"
+      }
     ],
     "events": [
-      { "timestamp": "14:00", "source": "Alerting", "message": "Duplicate charge anomaly crossed the checkout-service threshold." },
-      { "timestamp": "14:04", "source": "Support", "message": "Three matching customer reports are open." },
-      { "timestamp": "14:06", "source": "Trace", "message": "Two checkout requests reached the payment boundary for one order." }
+      {
+        "timestamp": "14:00",
+        "source": "Alerting",
+        "message": "Duplicate charge anomaly crossed the checkout-service threshold."
+      },
+      {
+        "timestamp": "14:04",
+        "source": "Support",
+        "message": "Three matching customer reports are open."
+      },
+      {
+        "timestamp": "14:06",
+        "source": "Trace",
+        "message": "Two checkout requests reached the payment boundary for one order."
+      }
     ]
   },
   "stakeholderMessages": [
-    { "id": "pm-1", "role": "pm", "author": "Maya - PM", "body": "Support has three duplicate-charge reports. Can we give them an ETA in 15 minutes?", "timestamp": "2:04 PM" },
-    { "id": "senior-1", "role": "senior", "author": "Jon - Senior Eng", "body": "Before changing gateway retries, what happens when two requests read this order at the same time?", "timestamp": "2:06 PM" },
-    { "id": "pair-1", "role": "ai-pair", "author": "AI Pair", "body": "I found two plausible paths. I would validate the interleaving before shipping either one.", "timestamp": "2:07 PM" }
+    {
+      "id": "support-1",
+      "role": "support",
+      "author": "Inez - Support",
+      "body": "Three customers sent the same order ID with two card receipts. We have paused refund macros until we know whether another retry can charge them again.",
+      "timestamp": "2:03 PM"
+    },
+    {
+      "id": "pm-1",
+      "role": "pm",
+      "author": "Maya - PM",
+      "body": "Support needs a containment update in 15 minutes. Can we stop duplicate charges without turning successful checkouts into errors?",
+      "timestamp": "2:04 PM"
+    },
+    {
+      "id": "sre-1",
+      "role": "sre",
+      "author": "Dev - SRE",
+      "body": "The 502 rate follows a retry burst, but Clearwater latency is normal. Two requests for ord-482 overlap at the payment boundary.",
+      "timestamp": "2:05 PM"
+    },
+    {
+      "id": "senior-1",
+      "role": "senior",
+      "author": "Jon - Senior Eng",
+      "body": "Before changing gateway retries, what happens when two callers read the same pending order before either writes state?",
+      "timestamp": "2:06 PM"
+    },
+    {
+      "id": "pair-1",
+      "role": "ai-pair",
+      "author": "AI Pair",
+      "body": "I prepared three repair options. Compare the ownership transition with the external charge, then judge the actual diff.",
+      "timestamp": "2:07 PM"
+    }
   ],
   "serviceDirectory": "checkout-service",
   "activeFile": "src/services/checkout-service.ts",
   "execution": {
     "language": "typescript",
     "runner": "webcontainer-node",
-    "installCommand": ["npm", "install"],
-    "testCommand": ["npm", "test"]
+    "installCommand": [
+      "npm",
+      "install"
+    ],
+    "testCommand": [
+      "npm",
+      "test"
+    ]
   }
 }

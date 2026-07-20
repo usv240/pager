@@ -1,4 +1,4 @@
-import type { AuthoredFixCandidate } from "./checkout-2pm";
+﻿import type { AuthoredFixCandidate } from "./checkout-2pm";
 
 const targetFile = "src/invoice_queue.py";
 
@@ -10,15 +10,18 @@ export const pythonInvoiceQueueCandidates = [
     faultTag: "symptom-not-cause",
     targetFile,
     teaching: "Normalization can prevent formatting variants, but two identical retry payloads still append the same normalized ID twice. The duplicate-work invariant remains broken.",
-    patch: `class InvoiceQueue:
-    def __init__(self):
-        self._pending = []
+    patch: `from invoice_repository import PendingInvoiceRepository
+
+
+class InvoiceQueue:
+    def __init__(self, repository: PendingInvoiceRepository | None = None):
+        self._repository = repository or PendingInvoiceRepository()
 
     def enqueue(self, invoice_id: str) -> None:
-        self._pending.append(invoice_id.strip())
+        self._repository.append(invoice_id.strip())
 
     def pending(self) -> list[str]:
-        return list(self._pending)
+        return self._repository.all()
 `,
   },
   {
@@ -27,35 +30,41 @@ export const pythonInvoiceQueueCandidates = [
     rationale: "Sort the pending queue at read time so reconciliation sees a stable order even when retries arrive close together.",
     faultTag: "partial-fix",
     targetFile,
-    teaching: "Sorting changes presentation, not membership. The same invoice remains queued twice, and it also risks breaking the service's submission-order contract.",
-    patch: `class InvoiceQueue:
-    def __init__(self):
-        self._pending = []
+    teaching: "Sorting changes presentation, not membership. The same invoice remains queued twice, and it also breaks the service's submission-order contract.",
+    patch: `from invoice_repository import PendingInvoiceRepository
+
+
+class InvoiceQueue:
+    def __init__(self, repository: PendingInvoiceRepository | None = None):
+        self._repository = repository or PendingInvoiceRepository()
 
     def enqueue(self, invoice_id: str) -> None:
-        self._pending.append(invoice_id)
+        self._repository.append(invoice_id)
 
     def pending(self) -> list[str]:
-        return sorted(self._pending)
+        return sorted(self._repository.all())
 `,
   },
   {
     id: "deduplicate-pending-invoice",
     title: "Guard duplicate pending work",
-    rationale: "Preserve first-in queue order, but only append an invoice when it is not already pending. A repeated retry then joins the existing work item instead of creating another one.",
+    rationale: "Use the pending-work repository to preserve first-in queue order while joining a repeated invoice retry to its existing work item.",
     faultTag: "verified",
     targetFile,
-    teaching: "The queue now records a given invoice ID once while preserving the first submission order. The repeated-retry acceptance check passes.",
-    patch: `class InvoiceQueue:
-    def __init__(self):
-        self._pending = []
+    teaching: "The queue now records a given invoice ID once while preserving first submission order. The worker and reconciliation checks both pass.",
+    patch: `from invoice_repository import PendingInvoiceRepository
+
+
+class InvoiceQueue:
+    def __init__(self, repository: PendingInvoiceRepository | None = None):
+        self._repository = repository or PendingInvoiceRepository()
 
     def enqueue(self, invoice_id: str) -> None:
-        if invoice_id not in self._pending:
-            self._pending.append(invoice_id)
+        if not self._repository.contains(invoice_id):
+            self._repository.append(invoice_id)
 
     def pending(self) -> list[str]:
-        return list(self._pending)
+        return self._repository.all()
 `,
   },
 ] as const satisfies readonly AuthoredFixCandidate[];

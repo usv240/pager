@@ -1,11 +1,12 @@
-import type { Incident } from "@/lib/types";
+﻿import type { Incident } from "@/lib/types";
 
 export const mockIncident: Incident = {
   id: "checkout-2pm",
   title: "The 2 PM Incident",
+  difficulty: "advanced",
   service: "checkout-service",
   severity: "SEV-1",
-  alert: "Duplicate payment attempts are spiking — 12 customers may have been charged twice.",
+  alert: "Duplicate payment attempts are spiking â€” 12 customers may have been charged twice.",
   timeLimitSeconds: 1200,
   availability: "complete",
   briefing: {

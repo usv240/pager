@@ -1,0 +1,97 @@
+{
+  "title": "The Settlement Replay Claim",
+  "difficulty": "advanced",
+  "service": "settlement-replay",
+  "severity": "SEV-1",
+  "alert": "A replayed settlement event can create duplicate external deliveries.",
+  "timeLimitSeconds": 1200,
+  "availability": "complete",
+  "briefing": {
+    "objective": "Prevent a re-entrant settlement replay from delivering the same event twice without blocking independent events.",
+    "successCriterion": "The Python unittest suite must show exactly one external delivery for a re-entrant replay while different settlement events still deliver.",
+    "rootCause": "The service performs the external delivery before it records ownership of the settlement event.",
+    "evidence": "The acceptance suite re-enters the service while the first delivery is in progress and compares the delivery log with the claim ledger."
+  },
+  "telemetry": {
+    "impact": "Duplicate settlement notices can trigger repeated downstream payouts and reconciliation work.",
+    "services": [
+      {
+        "name": "settlement-replay",
+        "status": "degraded"
+      },
+      {
+        "name": "delivery-gateway",
+        "status": "investigating"
+      },
+      {
+        "name": "settlement-ledger",
+        "status": "healthy"
+      }
+    ],
+    "events": [
+      {
+        "timestamp": "14:02",
+        "source": "Alerting",
+        "message": "External delivery count exceeded unique settlement events."
+      },
+      {
+        "timestamp": "14:05",
+        "source": "Replay worker",
+        "message": "Settlement set-204 was replayed during an active delivery."
+      },
+      {
+        "timestamp": "14:07",
+        "source": "Ledger",
+        "message": "The same settlement was observed twice before a claim record existed."
+      }
+    ]
+  },
+  "stakeholderMessages": [
+    {
+      "id": "finance-settlement",
+      "role": "finance",
+      "author": "Lena - Finance",
+      "body": "Finance paused the payout batch. We must prevent a repeated settlement notice without suppressing a different settlement event.",
+      "timestamp": "14:07"
+    },
+    {
+      "id": "maya-settlement",
+      "role": "pm",
+      "author": "Maya - PM",
+      "body": "Can we contain duplicate settlement notices before the payout deadline without dropping a valid replay?",
+      "timestamp": "14:08"
+    },
+    {
+      "id": "sre-settlement",
+      "role": "sre",
+      "author": "Ash - On-call",
+      "body": "A replay re-entered while set-204 was inside the delivery callback. The delivery count increased before the claim ledger did.",
+      "timestamp": "14:09"
+    },
+    {
+      "id": "jon-settlement",
+      "role": "senior",
+      "author": "Jon - Senior Eng",
+      "body": "Which durable state must exist before an external side effect can trigger a replay?",
+      "timestamp": "14:10"
+    },
+    {
+      "id": "pair-settlement",
+      "role": "ai-pair",
+      "author": "AI Pair",
+      "body": "I prepared three replay changes. Compare the claim ledger with the delivery boundary before selecting one.",
+      "timestamp": "14:12"
+    }
+  ],
+  "serviceDirectory": "settlement-replay",
+  "activeFile": "src/replay_service.py",
+  "execution": {
+    "language": "python",
+    "runner": "pyodide",
+    "testCommand": [
+      "unittest",
+      "discover",
+      "tests"
+    ]
+  }
+}

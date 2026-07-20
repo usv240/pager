@@ -1,5 +1,6 @@
 {
   "title": "The Webhook Replay",
+  "difficulty": "medium",
   "service": "webhook-ingest",
   "severity": "SEV-2",
   "alert": "Provider retries are replaying the same fulfillment event.",
@@ -14,27 +15,86 @@
   "telemetry": {
     "impact": "Fulfillment has started duplicate packing jobs after the provider redelivered successful webhooks.",
     "services": [
-      { "name": "webhook-ingest", "status": "degraded" },
-      { "name": "provider-gateway", "status": "investigating" },
-      { "name": "fulfillment", "status": "healthy" }
+      {
+        "name": "webhook-ingest",
+        "status": "degraded"
+      },
+      {
+        "name": "provider-gateway",
+        "status": "investigating"
+      },
+      {
+        "name": "fulfillment",
+        "status": "healthy"
+      }
     ],
     "events": [
-      { "timestamp": "16:31", "source": "Alerting", "message": "Processed fulfillment events exceeded unique provider event IDs." },
-      { "timestamp": "16:34", "source": "Gateway", "message": "evt-443 was redelivered after the provider timed out waiting for an acknowledgement." },
-      { "timestamp": "16:36", "source": "Fulfillment", "message": "Two packing jobs reference the same provider event." }
+      {
+        "timestamp": "16:31",
+        "source": "Alerting",
+        "message": "Processed fulfillment events exceeded unique provider event IDs."
+      },
+      {
+        "timestamp": "16:34",
+        "source": "Gateway",
+        "message": "evt-443 was redelivered after the provider timed out waiting for an acknowledgement."
+      },
+      {
+        "timestamp": "16:36",
+        "source": "Fulfillment",
+        "message": "Two packing jobs reference the same provider event."
+      }
     ]
   },
   "stakeholderMessages": [
-    { "id": "maya-webhook", "role": "pm", "author": "Maya - PM", "body": "Operations paused the duplicate packing jobs. Can we contain replays without losing a new delivery?", "timestamp": "4:37 PM" },
-    { "id": "jon-webhook", "role": "senior", "author": "Jon - Senior Eng", "body": "A provider retry is normal. Which identifier tells us that this delivery has already produced work?", "timestamp": "4:39 PM" },
-    { "id": "pair-webhook", "role": "ai-pair", "author": "AI Pair", "body": "I found three plausible edits. I would trace what the ledger represents before choosing a change.", "timestamp": "4:40 PM" }
+    {
+      "id": "support-webhook",
+      "role": "support",
+      "author": "Noor - Operations",
+      "body": "Fulfillment paused duplicate packing jobs. The same provider event is on two work orders, but new events must still flow.",
+      "timestamp": "4:36 PM"
+    },
+    {
+      "id": "maya-webhook",
+      "role": "pm",
+      "author": "Maya - PM",
+      "body": "Operations needs containment for the replayed jobs. Can we keep accepting a new delivery while ignoring a duplicate?",
+      "timestamp": "4:37 PM"
+    },
+    {
+      "id": "sre-webhook",
+      "role": "sre",
+      "author": "Dev - SRE",
+      "body": "Gateway logs show evt-443 redelivered after an acknowledgement timeout. The provider is behaving within its retry contract.",
+      "timestamp": "4:38 PM"
+    },
+    {
+      "id": "jon-webhook",
+      "role": "senior",
+      "author": "Jon - Senior Eng",
+      "body": "A provider retry is normal. Which identifier proves this delivery has already produced fulfillment work?",
+      "timestamp": "4:39 PM"
+    },
+    {
+      "id": "pair-webhook",
+      "role": "ai-pair",
+      "author": "AI Pair",
+      "body": "I prepared three ledger changes. Trace what the ledger represents before choosing a repair option.",
+      "timestamp": "4:40 PM"
+    }
   ],
   "serviceDirectory": "webhook-replay",
   "activeFile": "src/event_ledger.ts",
   "execution": {
     "language": "typescript",
     "runner": "webcontainer-node",
-    "installCommand": ["npm", "install"],
-    "testCommand": ["npm", "test"]
+    "installCommand": [
+      "npm",
+      "install"
+    ],
+    "testCommand": [
+      "npm",
+      "test"
+    ]
   }
 }

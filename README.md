@@ -1,96 +1,375 @@
 # Pager
 
-**Pager trains the judgment to catch a confident AI that is wrong.**
+> **Practice the judgment that comes after AI writes the code.**
 
-Players are paged into a production incident in an unfamiliar codebase. They inspect the repository, weigh AI-proposed repairs, reject symptom-only advice, and run the incident's actual test suite. Pager mints a credential only after execution verifies the repair and the session records that the player rejected incorrect AI advice.
+Pager is an execution-verified incident-response simulator for developers working alongside AI coding tools. It puts a learner inside a realistic production-style incident, provides plausible repair proposals, and requires the learner to inspect the code, reject unsafe changes, apply one repair, and prove the result by running the actual incident suite.
 
-Built for **OpenAI Build Week** with **Codex + GPT-5.6**. Track: **Education**.
+Pager does **not** grade a learner from an AI opinion. The browser sandbox runs the supplied tests against the learner's current code; that execution is the source of truth.
 
-## What the learner experiences
+## Why Pager exists
 
-- A full-width, IDE-style incident workspace: mission context and file explorer on the left, Monaco editor in the center, and incident intelligence on the right.
-- A persistent Pager command bar and active incident alert, so the operational context remains visible while investigating.
-- A first-run, four-step workspace guide with Back, Next, Escape, and Skip controls. **Guide** in the command bar reopens it at any time.
-- Authored stakeholder context and AI repair proposals. Learners must make a decision before Pager exposes the teaching feedback.
-- An optional **Live AI Pair** question box. When configured, it gives constrained, Socratic investigation help without revealing the winning proposal or supplying a paste-ready patch.
-- Light and dark themes, plus an execution-verified credential after a correct repair and sound AI oversight judgment.
+AI makes it faster to produce a patch. It does not automatically make the patch safe. A repair can sound reasonable, remove an error message, or satisfy one visible symptom while still breaking the invariant that matters in production.
 
-## The v1 mission
+Pager trains the missing loop:
 
-**The 2 PM Incident** is a 2,519-line TypeScript checkout service with a planted race condition. Two concurrent checkout calls can both charge the same order; the losing request misleadingly looks like a payment-gateway failure. The mission's acceptance test distinguishes a symptom-only fix from a repair that actually guarantees one charge.
+1. Understand the incident and its operational constraint.
+2. Trace the service and acceptance tests.
+3. Judge authored repair proposals using their actual source diff.
+4. Apply one repair and explicitly reject unsafe alternatives.
+5. Run the real suite and use execution evidence to decide whether the incident is contained.
 
-Pager includes four complete, execution-verified incidents: two Python/Pyodide retry and reservation labs, plus two TypeScript/WebContainer concurrency and webhook-replay labs. Every lab uses authored AI guidance and deterministic verification.
+It complements AI coding assistants by teaching verification discipline in a realistic, interactive environment rather than asking learners to trust a generated answer.
+
+## Build Week collaboration and provenance
+
+Pager was built during OpenAI Build Week with Codex and GPT-5.6. Codex accelerated the implementation of the incident fixtures, manifest and runner architecture, candidate verification scripts, workspace UX, documentation, and validation loop. Ujwal and Subbu made the product decisions: Pager must be an education product, repair options must be authored and neutral before a learner decides, execution must remain the grading authority, and unsupported compiler languages must not be marketed as available.
+
+- The detailed build record, decisions, and core-build `/feedback` Session ID are in [`CODEX-LOG.md`](CODEX-LOG.md).
+- The public demo flow is in [`DEMO-SCRIPT.md`](DEMO-SCRIPT.md).
+- Submission requirements are tracked against the [OpenAI Build Week official rules](https://openai.devpost.com/rules).
+
+This collaboration disclosure, setup guide, runnable fixture data, and the deployed demo are maintained so judges can understand both the product and how Codex/GPT-5.6 contributed to it.
+
+## What is shipped
+
+### Five execution-verified incident labs
+
+| Incident | Language | Difficulty | Failure mode | Browser runner |
+| --- | --- | --- | --- | --- |
+| The Invoice Queue Retry | Python | Easy | Repeated retries enqueue duplicate invoice work. | Pyodide + `unittest` |
+| The Inventory Reservation Retry | Python | Medium | Retry handling duplicates a reservation while other orders must remain intact. | Pyodide + `unittest` |
+| The Settlement Replay Claim | Python | Advanced | A replay needs a durable claim before an external settlement side effect. | Pyodide + `unittest` |
+| The Webhook Replay | TypeScript | Medium | A replayed webhook can trigger the same work twice. | WebContainer + project tests |
+| The 2 PM Incident | TypeScript | Advanced | Concurrent checkout callers can create more than one external charge. | WebContainer + project tests |
+
+Each lab has its own manifest, service fixture, test suite, alert, operational telemetry, stakeholder conversation, repair candidates, and acceptance criteria. Python and TypeScript/JavaScript labs are intentionally separated by the language filter and the incident selector.
+
+### Production-style investigation workspace
+
+- **Mission Control**: the left rail has four focused tabs:
+  - **Brief** explains the incident, operational impact, success condition, and recommended investigation sequence.
+  - **Signals** presents service health and a time-ordered operational timeline.
+  - **Files** exposes the incident's complete fixture tree and opens source or tests in the editor.
+  - **Evidence** summarizes the latest execution result, including per-test failure details.
+- **Code editor**: Monaco renders the actual incident files. Learners can make code changes directly; edits are local to the selected incident draft.
+- **Incident Intelligence**: the right rail separates stakeholder context from repair review:
+  - **Incident chat** contains incident-specific messages from product, engineering, SRE, support, finance, and the AI Pair where relevant.
+  - **Repair options** are authored candidate patches with an actual before/after code comparison before a learner makes a decision.
+- **Verification drawer**: a resizable bottom panel runs the incident's real acceptance suite and shows a structured pass/fail record with useful assertion evidence.
+- **Live Coach**: an optional AI investigation assistant is available as a panel rather than occupying the workspace permanently.
+
+### Workspace ergonomics
+
+- Resizable left rail, right rail, and verification drawer, with keyboard-accessible separators.
+- **Focus code** temporarily hides both context rails so learners can work in the editor without losing their investigation state; one control restores the full workspace.
+- The default Brief exposes the objective and success condition first, while the detailed investigation checklist and starter files are disclosed on demand.
+- Minimize and maximize controls for Incident Intelligence; a visible control restores it after minimization.
+- Light and dark themes with a restrained console-style visual system, high contrast, clear hierarchy, and minimal decorative effects.
+- A nine-step guided practice tour highlights the actual controls in order: map, brief, signals, files, editor, chat, repair options, verification, and evidence.
+- The tour can be skipped, closed with Escape, or restarted from **Guided practice**. Dismissal is remembered locally so it does not interrupt every reload.
+- Tooltips and information controls explain why panels and actions exist without making the primary screen noisy.
+- Mobile and narrow layouts prioritize the central task and allow rails to be resized or minimized instead of forcing all information into one fixed view.
+
+## The learning loop
+
+Pager deliberately makes the repair decision more demanding than clicking through suggestions.
+
+1. Open the **Brief** and **Signals** to learn what must remain true.
+2. Read the **Incident chat** for the pressure, business impact, and engineering constraint.
+3. Inspect source and tests from **Files** or the editor's file picker.
+4. Select **Review option** to see a side-by-side diff between current code and an authored proposal.
+5. Decide whether to apply or reject the proposal. Feedback and the candidate's fault explanation are revealed only after that decision.
+6. Only one repair can be active at a time. Applying another option requires resolving the current decision instead of stacking patches until tests happen to pass.
+7. Run verification against the current in-memory code.
+8. To mint a credential, the learner must review every repair option, reject the unsafe alternatives, apply the safe repair, and pass the actual suite.
+
+This protects the core learning goal: a passing outcome must be backed by a defensible decision trail, not random patch accumulation.
+
+## AI Pair, repair options, and Coach
+
+These are intentionally different tools.
+
+| Surface | What it is | What it can do | What it cannot do |
+| --- | --- | --- | --- |
+| **Incident chat** | Authored stakeholder context for the selected incident. | Explains impact, constraints, timeline, and questions the code must answer. | Change code or grade the learner. |
+| **Repair options** | Authored, deterministic candidate diffs. | Lets learners inspect, apply, or reject a concrete patch. | Change based on a model's opinion at runtime. |
+| **AI Pair** | The contextual teammate voice in incident chat. | Provides investigation-oriented context. | Decide the correct repair for the learner. |
+| **Live Coach** | Optional server-side AI assistance. | Helps the learner choose an artifact to inspect, restate an invariant, or understand test evidence. | Name/rank a repair, supply a patch, identify a line-by-line solution, or grade the decision. |
+| **Verification** | Browser execution runner. | Runs tests and reports pass/fail evidence. | Depend on the AI system for its result. |
+
+### Coach context and guardrails
+
+When enabled, the Coach receives context for the **currently selected incident only**:
+
+- incident title, alert, severity, affected service, objective, and success criterion;
+- operational services and timeline events;
+- incident chat messages;
+- a safe file map and the currently open source file;
+- the latest test summary and per-test results.
+
+Repair-option metadata, hidden fault tags, and teaching feedback are excluded from Coach context. The server prompt directs the Coach to answer in a short **Observation / Question / Next step** format and to redirect direct-answer requests toward investigation. The response filter rejects code blocks, direct option recommendations, and answer-leaking phrases before returning a response.
+
+The Coach is optional support only. It never controls the repair review state, test runner, credential, or score.
+
+## Architecture
+
+```text
+                        +-------------------------------+
+                        |          Next.js UI            |
+                        | landing + workspace + guide    |
+                        +---------------+---------------+
+                                        |
+     +----------------------------------+----------------------------------+
+     |                                  |                                  |
+     v                                  v                                  v
++------------+                 +------------------+              +------------------+
+| Manifest / |                 | Browser runners  |              | Server AI routes |
+| fixture     |                 |                  |              |                  |
+| loader      |                 | Python: Pyodide  |              | Coach only       |
+|             |                 | TS/JS:           |              | optional OpenAI  |
+| JSON source |                 | WebContainer     |              | Responses API    |
++-----+------+                 +--------+---------+              +--------+---------+
+      |                                 |                                 |
+      v                                 v                                 v
+Incident metadata,                Actual test output,             Bounded guidance;
+file tree, chat,                  structured test results,        never grading or
+telemetry, repair                 credential eligibility           runner authority
+candidates
+```
+
+### Application structure
+
+```text
+app/
+  page.tsx                       Landing page
+  credential/                    Execution-verified completion view
+  api/incidents/                 Manifest-backed incident catalog
+  api/incident/                  Selected incident payload
+  api/agents/                    Coach, stakeholder, repair review APIs
+components/
+  pager-landing.tsx              Product positioning and lab catalog
+  incident-workbench.tsx         Workspace state and decision loop
+  workspace-guide.tsx            Highlighted onboarding flow
+  code-editor.tsx                Monaco integration
+engine/
+  incident-manifest.ts           Manifest parsing and validation
+  incident-loader.ts             Fixture loading and file allow-listing
+  runners/                       WebContainer and Pyodide execution adapters
+incidents/
+  <incident-id>/manifest.json    Incident source of truth
+  <incident-id>/service/         Runnable fixture source and tests
+lib/
+  agents/                        Server-only OpenAI adapter and Coach guardrails
+  credentials.ts                 Credential data and eligibility helpers
+scripts/                         Candidate and progression verification scripts
+tests/agents.test.ts             API/guardrail/unit test coverage
+```
+
+### Manifest-driven content model
+
+Every lab is defined by `incidents/<incident-id>/manifest.json`. The manifest validates and supplies:
+
+- identity, title, language, difficulty, availability, severity, and service;
+- alert text, incident briefing, verification objective, and success criterion;
+- operational telemetry and incident-specific stakeholder messages;
+- source directory, initial file, runner kind, install command, and test command.
+
+The server-side loader recursively gathers only approved source extensions from the fixture directory and ignores build output and dependency directories. The browser receives the bounded fixture rather than unrestricted repository access.
+
+### Real browser execution
+
+Pager does not simulate a green check with a hardcoded response.
+
+- **TypeScript / JavaScript** labs boot an isolated [WebContainer](https://webcontainers.io/) session in the browser, mount fixture files, install fixture dependencies on first run, write only changed files on later runs, and execute the authored test command.
+- **Python** labs load Pyodide in the browser, write the fixture files into its virtual filesystem, invalidate import caches, clear previous incident modules, and run `unittest` discovery. Clearing cached service/test modules prevents stale state from causing a later verification run to use old code.
+- Runner output is parsed into a shared structured result: overall status, a human-readable summary, individual tests, and assertion details where available.
+- The workspace keeps the latest file state synchronously before dispatching a run so the first verification click uses the code the learner sees.
+
+WebContainers require cross-origin isolation. `next.config.ts` sends `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` headers for the application.
+
+## State, drafts, and reset behavior
+
+Pager is deliberately session-oriented and has no account requirement.
+
+- Code drafts and the active file are saved in browser `localStorage` per incident under a versioned Pager key.
+- Rail sizes, panel visibility, and theme preferences are preserved locally.
+- **Restore code** returns only the source files to the incident baseline while preserving decision evidence.
+- **Reset incident** restores the baseline files and clears repair decisions, execution results, credential state, and Coach conversation for that incident.
+- Guided-practice dismissal is stored locally; users can relaunch the guide whenever they want.
+
+No fixture code, learner draft, or test result is written to a shared production database by the current application.
+
+## Supported and planned languages
+
+| Status | Languages | Reason |
+| --- | --- | --- |
+| Supported now | Python, TypeScript / JavaScript | Each has an isolated in-browser runner and real authored acceptance suites. |
+| Planned | Java, C++, additional languages | Pager will add them only after providing verified isolated runtimes, fixtures, and test behavior. |
+
+Pager intentionally does not claim Java or C++ support yet. A language selector without a trusted runner would be a fake capability.
 
 ## Run locally
 
-Requirements: Node.js 20 or newer and an internet connection for first-run WebContainer/Pyodide downloads.
+### Prerequisites
+
+- Node.js 20 or newer
+- npm
+- A modern Chromium-based browser is recommended for WebContainers
+
+### Install and start
 
 ```bash
+cd pager
 npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. Choose a mission from the selector:
+Open `http://localhost:3000`.
 
-- **The Invoice Queue Retry** - default Python incident executed in Pyodide.
-- **The Inventory Reservation Retry** - Python reservation replay incident executed in Pyodide.
-- **The 2 PM Incident** - TypeScript executed in WebContainer.
-- **The Webhook Replay** - TypeScript provider-event replay incident executed in WebContainer.
+To choose another port:
 
-### Enable Live AI Pair locally (optional)
-
-Pager runs the deterministic mission without an API key. To enable learner questions to the Live AI Pair, create a local-only `pager/.env.local` file:
-
-```env
-OPENAI_API_KEY=your_key_here
-MOCK_MODE=0
+```bash
+npm run dev -- -p 3011
 ```
 
-Restart the development server after changing environment variables. `.env.local` is intentionally local and must never be committed. In Vercel, set the same variables in the project environment settings.
+If the port is already occupied, either open the existing local server or use a different port. On Windows, you can find the owner with:
 
-### TypeScript demo path
+```powershell
+Get-NetTCPConnection -LocalPort 3010 | Select-Object OwningProcess
+Get-Process -Id <PID>
+```
 
-1. Open **The 2 PM Incident**.
-2. Reject either incorrect AI recommendation.
-3. Apply **Share in-flight checkout work**.
-4. Run the verification suite.
-5. On a genuine test pass, Pager opens the execution-verified credential screen.
+### Optional Live Coach configuration
 
-The test suite, not an LLM, decides whether the alert clears or a credential mints.
+Create `pager/.env.local` locally. Never commit this file.
 
-### Validate the app
+```dotenv
+OPENAI_API_KEY=your_key_here
+MOCK_MODE=0
+# Optional; defaults to 4000 milliseconds
+PAGER_AGENT_TIMEOUT_MS=4000
+```
+
+With no API key, or with `MOCK_MODE=1`, the product remains fully usable: repair review and verification are deterministic. The optional Coach displays safe unavailable guidance instead of pretending to have live AI support.
+
+When Live Coach is enabled, questions plus the selected incident's bounded investigation context are sent to the configured OpenAI API. Do not paste credentials, private customer data, or real production secrets into Coach prompts.
+
+## Validate the project
+
+Run these commands before a handoff or deployment:
 
 ```bash
 npm run typecheck
 npm run lint
+npm run test:agents
+npm run test:e2e
+npm run verify:candidates
+npm run verify:python-candidates
+npm run verify:python-progression
+npm run verify:expanded-candidates
+npx playwright install chromium # first time only
+npm run test:e2e
 npm run build
 ```
 
-## Architecture
+What each check covers:
 
-- `incidents/<id>/manifest.json` defines a mission's language, runner, timing, source root, and test command.
-- `engine/runners/` selects an execution runtime. Only verified runners are enabled for learners.
-- `webcontainer-node` runs the TypeScript mission's real `npm test` suite in the browser.
-- `pyodide` runs standard-library Python `unittest` fixtures in the browser; final browser smoke testing remains a release gate for the deployed build.
-- Each incident manifest owns its briefing, telemetry, and base stakeholder content. Live model agents stay behind the same interface and will not change deterministic verification.
-- Java and C++ remain explicitly upcoming until browser-safe runners, real artifacts, and deterministic test suites are available.
-- `app/api/agents/ask/` is the server-only optional Live AI Pair endpoint. It requires `OPENAI_API_KEY`, preserves the no-answer-reveal boundary, and never determines mission completion.
+| Command | Purpose |
+| --- | --- |
+| `npm run typecheck` | Strict TypeScript validation. |
+| `npm run lint` | Next.js/ESLint quality checks. |
+| `npm run test:agents` | Coach API validation, safety behavior, and repair-review related tests. |
+| `npm run test:e2e` | Playwright Chromium coverage of the critical learner loop: choose a lab, inspect repair diffs, reject unsafe repairs, apply the safe repair, execute, and mint a credential. The first run needs the Playwright Chromium browser installed. |
+| `npm run verify:candidates` | Verifies TypeScript candidate fixtures against expected outcomes. |
+| `npm run verify:python-candidates` | Verifies Python candidate fixtures. |
+| `npm run verify:python-progression` | Verifies easy, medium, and advanced Python candidate progression. |
+| `npm run verify:expanded-candidates` | Checks the expanded candidate catalog. |
+| `npm run build` | Creates a production Next.js build and validates routes. |
 
-Java and C++ are intentionally not presented as supported. They require isolated compiler sandboxes before Pager can honestly execute their missions.
+### Manual end-to-end QA
 
-## Deploy
+For each lab:
 
-Pager is a standard Next.js App Router application and deploys to Vercel. The included cross-origin isolation headers are required for WebContainer execution. Deploy the `main` branch only after the browser verification flow has been smoke-tested.
+1. Select the lab from the incident picker and confirm the title, difficulty, language, alert, chat, and file tree change.
+2. Start guided practice once; confirm each highlighted control is reachable, then skip and reload to confirm the tour stays dismissed.
+3. Open a source file and its corresponding test file.
+4. Review all three repair options. Reject unsafe options and apply the safe one.
+5. Run verification; inspect both the bottom results and left-rail Evidence view.
+6. Edit code, run verification again, and confirm the runner uses the new content.
+7. Use **Restore code** and **Reset incident** to confirm their different scopes.
+8. Minimize and reopen Incident Intelligence; resize both rails and the verification drawer.
+9. Toggle light/dark mode and confirm controls remain legible.
+10. Open Coach, ask for an investigation step, and confirm it guides without supplying the repair.
 
-## Submission handoff
+## Deploy to Vercel
 
-- [`DEMO-SCRIPT.md`](DEMO-SCRIPT.md) contains the judge-ready 3-minute walkthrough.
-- [`DEVPOST-HANDOFF.md`](DEVPOST-HANDOFF.md) contains the project copy, proof points, and submission checklist.
+1. Import the `pager` repository/project in Vercel.
+2. Use the default Next.js build settings (`npm run build`).
+3. Add `OPENAI_API_KEY` only if deploying Live Coach. Set `MOCK_MODE=0` to enable it.
+4. Keep `.env.local` out of Git; use Vercel environment variables for production.
+5. Confirm the deployment serves the cross-origin-isolation headers required by WebContainers.
+6. Run the manual end-to-end checklist in the deployed browser, especially both runner types.
 
-## How we built with Codex
+A production deployment does not connect to an actual company incident system. Pager's "production" language and telemetry are realistic simulation artifacts for training.
 
-[`CODEX-LOG.md`](CODEX-LOG.md) records where Codex accelerated the work, the decisions the team made, and how GPT-5.6 was used. The task context and constraints live in [`AGENTS.md`](AGENTS.md).
+## Security and privacy boundaries
+
+- No API key is shipped to the browser. OpenAI calls use the server-only adapter in `lib/agents/`.
+- Live Coach accepts same-origin browser requests only when an `Origin` header is supplied, validates and bounds the request body, applies a configurable timeout, and uses an in-memory request limit of 12 requests per 10 minutes per client identifier.
+- Repair evaluation and credentials are deterministic; an LLM cannot mark an unsafe repair correct.
+- Browser runners execute only the selected fixture in their own runtime. They are not a replacement for server-side sandboxing of untrusted arbitrary repositories.
+- Current persistence is local browser state, not authenticated multi-user storage.
+- The in-memory Coach rate limit is suitable for the hackathon prototype; a multi-instance deployment should move rate limiting to a shared store and add authentication, audit logging, and abuse monitoring.
+- Run `npm audit --omit=dev` in CI and review its output before releases. Dependency scanning reduces risk; it does not replace patch management and security review.
+
+## Add a new incident
+
+Use the existing labs as a template. A new incident should include:
+
+1. `incidents/<id>/manifest.json` with validated metadata, chat, telemetry, and execution configuration.
+2. A complete runnable fixture under `incidents/<id>/service/`, including source and acceptance tests.
+3. Three or more authored repair candidates: plausible unsafe alternatives and one safe repair.
+4. Candidate verification coverage that proves the expected pass/fail behavior.
+5. Distinct stakeholder messages and operational signals that match the incident's actual invariant.
+6. A difficulty label that reflects the required reasoning, not merely the number of files.
+7. Updates to the catalog and progression scripts as needed.
+
+Do not add a language tab until its fixture can run in an isolated, browser-compatible runner and its validation command is reliable.
+
+## Demo and hackathon materials
+
+- [`DEMO-SCRIPT.md`](DEMO-SCRIPT.md): judge-ready product demo flow.
+- [`DEVPOST-HANDOFF.md`](DEVPOST-HANDOFF.md): submission and handoff material.
+- [`PRODUCT-PLAN.md`](PRODUCT-PLAN.md): product scope and planned direction.
+- [`TEAM.md`](TEAM.md): team context.
+- [`CODEX-LOG.md`](CODEX-LOG.md): AI-assisted development log.
+
+## Future work and scaling roadmap
+
+Pager is intentionally focused on a credible core learning loop. These are planned capabilities, not claims that they already exist.
+
+### Content and learning scale
+
+- Add incident packs across authentication, data migrations, queues, caching, observability, and distributed systems while retaining a real acceptance suite for every pack.
+- Build an instructor content pipeline for manifests, fixture repos, candidate patches, evaluation cases, and rubric review.
+- Add learner profiles, private cohorts, classroom assignments, progress history, and durable credential records.
+- Introduce adaptive sequencing based on verified mistakes and evidence-reading patterns, never on an LLM deciding competence.
+
+### Platform scale
+
+- Move local drafts, Coach conversations, rate limits, and credential records to authenticated, multi-tenant storage with row-level access controls.
+- Replace in-memory Coach throttling with a shared rate-limit store and edge/WAF controls; add audit logs, abuse monitoring, and budget controls per learner or organization.
+- Keep client-safe runners for known fixtures, while moving future arbitrary or heavier language execution to ephemeral server-side sandboxes with strict CPU, memory, time, network, and filesystem isolation.
+- Add a job queue and runner pool for concurrent classrooms; store execution artifacts separately from product data and retain them under explicit privacy controls.
+- Add metrics for runner availability, test latency, Coach refusal/error rates, learning completion, and accessibility regressions.
+
+### Quality and security roadmap
+
+- Maintain Playwright coverage for the critical learner loop and expand it to all five labs, reset/retry behavior, resizing, narrow screens, light/dark themes, and Coach failure states.
+- Add automated accessibility checks, cross-browser validation, dependency scanning, signed release artifacts, and deployment health checks.
+- Add organization SSO, privacy controls, consented telemetry, data-retention policies, and a security review before handling any real customer or repository data.
+- Add Java, C++, and other languages only after each has a verified isolated runner, deterministic fixture suite, and repeatable local/CI validation.
 
 ## License
 
-MIT - see [`LICENSE`](LICENSE).
+See [`LICENSE`](LICENSE).
