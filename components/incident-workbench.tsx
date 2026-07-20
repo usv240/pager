@@ -24,8 +24,8 @@ type ResizablePane = "left" | "right";
 
 const defaultPaneWidths = { left: 280, right: 360 };
 const paneLimits = { left: { min: 220, max: 440 }, right: { min: 280, max: 520 } };
-const verificationHeightLimits = { min: 150, max: 520 };
-const defaultVerificationHeight = 240;
+const verificationHeightLimits = { min: 160, max: 440 };
+const defaultVerificationHeight = 220;
 
 export function IncidentWorkbench() {
   const runnerRuntimeRef = useRef<RunnerRuntime | null>(null);
@@ -51,8 +51,9 @@ export function IncidentWorkbench() {
   const [agentQuestions, setAgentQuestions] = useState<AiQuestion[]>([]);
   const [agentQuestionError, setAgentQuestionError] = useState("");
   const [askingAgent, setAskingAgent] = useState(false);
+  const [agentChatOpen, setAgentChatOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const [verificationOpen, setVerificationOpen] = useState(false);
+  const [verificationOpen, setVerificationOpen] = useState(true);
   const [paneWidths, setPaneWidths] = useState(defaultPaneWidths);
   const [verificationHeight, setVerificationHeight] = useState(defaultVerificationHeight);
   const selectedIncidentId = searchParams.get("incident") ?? "";
@@ -119,8 +120,9 @@ export function IncidentWorkbench() {
         setAgentQuestion("");
         setAgentQuestions([]);
         setAgentQuestionError("");
+        setAgentChatOpen(false);
         setGuideOpen(window.localStorage.getItem("pager-workspace-guide-v2-dismissed") !== "1");
-        setVerificationOpen(false);
+        setVerificationOpen(true);
       });
   }, [selectedIncidentId]);
 
@@ -129,6 +131,8 @@ export function IncidentWorkbench() {
   const supportsAgents = incident?.id === "checkout-2pm" || incident?.id === "python-invoice-queue";
   const usesDynamicStakeholders = incident?.id === "checkout-2pm";
   const reviewedCount = Object.keys(decisions).length;
+  const passedTestCount = result?.tests.filter((test) => test.passed).length ?? 0;
+  const failedTestCount = result?.tests.length ? result.tests.length - passedTestCount : 0;
   const gamePhase = useMemo<AgentGamePhase>(() => {
     if (result && !result.passed) return "after-tests-fail";
     if (fixes.some((fix) => decisions[fix.id] === "applied" && reveals[fix.id]?.faultTag !== "verified" && reveals[fix.id] !== undefined)) return "after-wrong-fix";
@@ -314,6 +318,7 @@ export function IncidentWorkbench() {
   };
   const beginVerificationResize = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
     const initialHeight = verificationHeight;
     const initialY = event.clientY;
     const onPointerMove = (moveEvent: globalThis.PointerEvent) => updateVerificationHeight(initialHeight - (moveEvent.clientY - initialY));
@@ -356,9 +361,10 @@ export function IncidentWorkbench() {
           <Link className={incident.execution.language === "python" ? "active" : ""} href="/?play=1&incident=python-invoice-queue">Python</Link>
           <Link className={incident.execution.language === "typescript" ? "active" : ""} href="/?play=1&incident=checkout-2pm">TS / JS</Link>
         </nav>
+        <span className="workspace-lab-count">{catalog.length || 2} verified labs</span>
         <div className="workspace-topbar-actions">
           <InfoTip label="About this simulator">Pager pairs an incident coach with real code and deterministic tests. Use AI Pair to investigate; use the acceptance suite to validate a repair.</InfoTip>
-          <button className="workspace-guide-trigger" onClick={() => setGuideOpen(true)}>Guide</button>
+          <button className="workspace-guide-trigger" onClick={() => setGuideOpen(true)}>Guided practice</button>
           <ThemeToggle />
           <IncidentClock timeLimitSeconds={incident.timeLimitSeconds} />
         </div>
@@ -372,7 +378,7 @@ export function IncidentWorkbench() {
       <div id="workspace-main" className="workspace-frame" style={{ "--workspace-left-width": `${paneWidths.left}px`, "--workspace-right-width": `${paneWidths.right}px` } as CSSProperties}>
         <aside className="workspace-rail" aria-label="Incident context">
           <div className="workspace-rail-header">
-            <span>MISSION CONTROL</span>
+            <span>MISSION CONTROL <InfoTip label="About mission control" className="workspace-inline-tip">Use Brief for the objective, Signals for operational context, Files to navigate the artifact, and Evidence for a concise suite summary.</InfoTip></span>
             <span>{reviewedCount}/3 reviewed</span>
           </div>
           <nav className="workspace-tabs workspace-context-tabs" aria-label="Context panel">
@@ -392,6 +398,8 @@ export function IncidentWorkbench() {
                 <li className={reviewedCount > 0 ? "current" : ""}><span>02</span><div><strong>Make the call</strong><p>Apply or reject before execution.</p></div></li>
                 <li className={result?.passed ? "complete" : result ? "current" : ""}><span>03</span><div><strong>Prove it by execution</strong><p>{result ? result.summary : "Run the acceptance suite."}</p></div></li>
               </ol>
+              <button className="workspace-practice-button" onClick={() => setGuideOpen(true)}>Start guided practice <span aria-hidden="true">→</span></button>
+              <p className="workspace-practice-note">New here? Follow the highlighted steps. You can skip the guide at any time and work at your own pace.</p>
               <div className="workspace-first-files"><span>START HERE</span>{files.slice(0, 3).map((file) => <button key={file.path} onClick={() => openFile(file.path)}>{file.path}</button>)}</div>
             </section>}
             {leftTab === "signals" && <section id="guide-signals" className="workspace-signals" aria-label="Incident signals" tabIndex={-1}><span className="workspace-eyebrow">LIVE INCIDENT SIGNALS</span><h2>Operational context</h2><p className="workspace-impact">{incident.telemetry.impact}</p><div className="workspace-service-list"><span>SERVICE HEALTH</span>{incident.telemetry.services.map((service) => <div key={service.name}><i className={service.status} /><strong>{service.name}</strong><em>{service.status}</em></div>)}</div><ol className="workspace-timeline">{incident.telemetry.events.map((event) => <li key={`${event.timestamp}-${event.source}`}><time>{event.timestamp}</time><div><strong>{event.source}</strong><p>{event.message}</p></div></li>)}</ol></section>}
@@ -399,7 +407,7 @@ export function IncidentWorkbench() {
             {leftTab === "evidence" && <div id="guide-evidence" className="workspace-evidence" tabIndex={-1}>
               <span className="workspace-eyebrow">EXECUTION EVIDENCE</span>
               {!result && <><h2>Nothing has run yet.</h2><p>Your decision is not graded by an AI. Run the real acceptance suite when you are ready to test the code.</p></>}
-              {result && <><h2 className={result.passed ? "pass" : "fail"}>{result.passed ? "Suite passed" : "Suite found a failure"}</h2><p>{result.summary}</p><div className="workspace-test-list">{result.tests.map((test) => <div key={test.name}><strong className={test.passed ? "pass" : "fail"}>{test.passed ? "PASS" : "FAIL"}</strong><span>{test.name}</span><small>{test.detail}</small></div>)}</div></>}
+              {result && <><h2 className={result.passed ? "pass" : "fail"}>{result.passed ? "Suite passed" : "Suite found a failure"}</h2><p>{result.summary}</p><div className="workspace-evidence-summary"><strong>{passedTestCount} passed</strong>{failedTestCount > 0 && <strong className="fail">{failedTestCount} failed</strong>}</div><button className="workspace-evidence-button" onClick={() => { setVerificationOpen(true); requestAnimationFrame(() => document.getElementById("verification-drawer")?.scrollIntoView({ behavior: "smooth", block: "nearest" })); }}>Open detailed test output</button><small className="workspace-evidence-note">Detailed failures live in the verification panel so you only inspect them once.</small></>}
               {executionError && <p className="workspace-error" role="alert">{executionError}</p>}
             </div>}
           </div>
@@ -409,20 +417,20 @@ export function IncidentWorkbench() {
 
         <section id="guide-editor" className="workspace-editor" aria-label="Source editor" tabIndex={-1}>
           <div className="workspace-editor-tabs"><button className="active"><span className="tab-dot" />{activeFile}</button><span>{incident.execution.language}</span></div>
-          <label className="workspace-file-picker"><span>Open file</span><select value={activeFile} onChange={(event) => openFile(event.target.value)}>{files.map((file) => <option key={file.path} value={file.path}>{file.path}</option>)}</select></label>
+          <label className="workspace-file-picker"><span>Open file <InfoTip label="About source files" className="workspace-inline-tip">Choose a file to inspect or edit. Changes stay in this incident workspace until you run verification.</InfoTip></span><select value={activeFile} onChange={(event) => openFile(event.target.value)}>{files.map((file) => <option key={file.path} value={file.path}>{file.path}</option>)}</select></label>
           <div className="workspace-editor-surface"><CodeEditor language={incident.execution.language} path={activeFile} value={source} onChange={(content) => updateSource(activeFile, content)} /></div>
           <section id="guide-verify" className="workspace-runner" aria-label="Verification controls" tabIndex={-1}>
-            <div><span className="workspace-eyebrow">VERIFICATION</span><p>{running ? "Running the actual acceptance suite…" : result ? result.summary : "Changes are local to this incident. The suite decides what ships."}</p></div>
+            <div><span className="workspace-eyebrow">VERIFICATION <InfoTip label="About verification" className="workspace-inline-tip">Runs the language-specific acceptance suite. Its reported pass or fail result is the only completion authority.</InfoTip></span><p>{running ? "Running the actual acceptance suite…" : result ? result.summary : "Changes are local to this incident. The suite decides what ships."}</p></div>
             <div className="workspace-run-actions">{result && <button className="workspace-results-toggle" onClick={() => setVerificationOpen((current) => !current)} aria-expanded={verificationOpen} aria-controls="verification-drawer">{verificationOpen ? "Hide results" : "View results"}</button>}<button className="workspace-run-button" onClick={() => void verify()} disabled={running}>{running ? "Running tests…" : "Run verification"}</button></div>
           </section>
-          {verificationOpen && <><div className="workspace-verification-resizer" role="separator" aria-label="Resize verification panel" aria-orientation="horizontal" aria-controls="verification-drawer" aria-valuemin={verificationHeightLimits.min} aria-valuemax={verificationHeightLimits.max} aria-valuenow={verificationHeight} tabIndex={0} onPointerDown={beginVerificationResize} onKeyDown={resizeVerificationWithKeyboard} /><section id="verification-drawer" className="workspace-verification-drawer" aria-label="Verification results" style={{ "--verification-height": `${verificationHeight}px` } as CSSProperties}><div className="workspace-verification-heading"><span>TEST RESULTS</span>{result && <strong className={result.passed ? "pass" : "fail"}>{result.passed ? "PASSING" : "FAILING"}</strong>}</div>{!result && <p>Verification is running. Pager will show every reported acceptance check here.</p>}{result && <div className="workspace-verification-list">{result.tests.map((test) => <article key={test.name}><strong className={test.passed ? "pass" : "fail"}>{test.passed ? "PASS" : "FAIL"}</strong><div><span>{test.name}</span><small>{test.detail}</small></div></article>)}</div>}{executionError && <p className="workspace-error" role="alert">{executionError}</p>}</section></>}
+          {verificationOpen && <><div className="workspace-verification-resizer" role="separator" aria-label="Resize verification panel" aria-orientation="horizontal" aria-controls="verification-drawer" aria-valuemin={verificationHeightLimits.min} aria-valuemax={verificationHeightLimits.max} aria-valuenow={verificationHeight} tabIndex={0} onPointerDown={beginVerificationResize} onKeyDown={resizeVerificationWithKeyboard}><span>Drag to resize</span></div><section id="verification-drawer" className="workspace-verification-drawer" aria-label="Verification results" style={{ "--verification-height": `${verificationHeight}px` } as CSSProperties}><div className="workspace-verification-heading"><span>TEST RESULTS</span>{result && <strong className={result.passed ? "pass" : "fail"}>{result.passed ? "PASSING" : "FAILING"}</strong>}</div>{!result && <p>No verification has run yet. Change code or review a repair option, then run the real acceptance suite.</p>}{result && <div className="workspace-verification-list">{result.tests.map((test) => <article key={test.name}><strong className={test.passed ? "pass" : "fail"}>{test.passed ? "PASS" : "FAIL"}</strong><div><span>{test.name}</span><small>{test.detail}</small></div></article>)}</div>}{executionError && <p className="workspace-error" role="alert">{executionError}</p>}</section></>}
           {completionMessage && <p className="workspace-completion" role="status">{completionMessage}</p>}
         </section>
 
         <div className="workspace-resizer" role="separator" aria-label="Resize incident intelligence panel" aria-orientation="vertical" aria-controls="guide-coach" aria-valuemin={paneLimits.right.min} aria-valuemax={paneLimits.right.max} aria-valuenow={paneWidths.right} tabIndex={0} onPointerDown={(event) => beginPaneResize("right", event)} onKeyDown={(event) => resizePaneWithKeyboard("right", event)} />
 
         <aside id="guide-coach" className="workspace-console" aria-label="Incident intelligence" tabIndex={-1}>
-          <div className="workspace-console-header"><div><span>INCIDENT INTELLIGENCE</span><strong>{supportsAgents ? "AI Pair and repair review" : "Python lab guide"}</strong></div><InfoTip label="How Pager evaluates you">AI Pair explains context and investigation. The deterministic acceptance suite validates repairs; Pager never asks an LLM to decide whether you passed.</InfoTip></div>
+          <div className="workspace-console-header"><div><span>INCIDENT INTELLIGENCE</span><strong>{supportsAgents ? "AI Pair and repair review" : "Python lab guide"}</strong></div><InfoTip label="How Pager evaluates you" className="workspace-intelligence-tip">AI Pair explains context and investigation. The deterministic acceptance suite validates repairs; Pager never asks an LLM to decide whether you passed.</InfoTip></div>
           {supportsAgents ? <>
             <nav className="workspace-tabs console-tabs" aria-label="Intelligence panel"><button className={rightTab === "channel" ? "active" : ""} onClick={() => setRightTab("channel")}>Incident chat <span>{channelMessages.length}</span></button><button className={rightTab === "pair" ? "active" : ""} onClick={() => setRightTab("pair")}>AI Pair <span>{fixes.length}</span></button></nav>
             {rightTab === "channel" && <div id="guide-chat" className="workspace-channel" tabIndex={-1}>{channelMessages.map((message) => <article key={message.id} className="workspace-message"><div><strong>{message.author}</strong><time>{message.timestamp}</time></div><p>{message.body}</p></article>)}</div>}
@@ -430,6 +438,7 @@ export function IncidentWorkbench() {
           </> : <div className="workspace-python-guide"><span className="workspace-eyebrow">REAL PYTHON EXECUTION</span><h2>Prevent duplicate queue entries.</h2><p>Inspect `enqueue`, add the smallest guard that preserves queue order, then run the unittest suite. This lab is execution-ready; AI Pair decisions and credentialing remain TypeScript-mission only.</p><div><strong>Success condition</strong><p>Repeated enqueue attempts leave each invoice ID exactly once in the pending queue.</p></div></div>}
         </aside>
       </div>
+      {supportsAgents && <><button className="workspace-agent-dock" onClick={() => setAgentChatOpen(true)} aria-expanded={agentChatOpen} aria-controls="agent-chat">Ask AI Pair <span>Coach</span></button>{agentChatOpen && <aside id="agent-chat" className="workspace-agent-chat" role="dialog" aria-modal="false" aria-label="AI Pair incident coach"><header><div><span className="workspace-eyebrow">LIVE AI PAIR</span><strong>Ask the incident coach</strong></div><button className="workspace-agent-chat-close" onClick={() => setAgentChatOpen(false)} aria-label="Close AI Pair chat">×</button></header><p className="workspace-agent-chat-intro">Ask for an investigation plan, relevant files, or help interpreting a failed test. AI explains; the suite verifies.</p><div className="workspace-agent-chat-history" aria-live="polite">{agentQuestions.length === 0 && <p className="workspace-agent-empty">No questions yet. Start with the failing invariant.</p>}{agentQuestions.map((item, index) => <article key={`${item.question}-${index}`} className="workspace-agent-answer"><p><b>You:</b> {item.question}</p><p><b>AI Pair:</b> {item.answer}</p></article>)}</div><form onSubmit={(event) => { event.preventDefault(); void askAgent(); }}><label className="sr-only" htmlFor="agent-question-chat">Ask AI Pair</label><textarea id="agent-question-chat" value={agentQuestion} onChange={(event) => setAgentQuestion(event.target.value)} placeholder="Ask what to inspect or how to read the failure…" maxLength={700} rows={3} /><div><small>Do not paste credentials or customer data.</small><button type="submit" disabled={askingAgent || !agentQuestion.trim()}>{askingAgent ? "Thinking…" : "Ask AI Pair"}</button></div>{agentQuestionError && <p className="workspace-agent-error" role="alert">{agentQuestionError}</p>}</form></aside>}</>}
       <WorkspaceGuide open={guideOpen} onClose={closeGuide} onSkip={skipGuide} onHighlight={highlightGuideArea} onNavigate={navigateGuide} />
     </main>
   );

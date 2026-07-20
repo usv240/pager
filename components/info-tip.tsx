@@ -2,11 +2,11 @@
 
 import { useId, useState } from "react";
 
-export function InfoTip({ label, children }: { label: string; children: React.ReactNode }) {
+export function InfoTip({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   const [open, setOpen] = useState(false);
   const tooltipId = useId();
 
-  return <span className="info-tip" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+  return <span className={`info-tip ${className ?? ""}`} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
     <button
       type="button"
       aria-label={label}
