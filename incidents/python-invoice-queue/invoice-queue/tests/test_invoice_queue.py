@@ -15,3 +15,22 @@ class InvoiceQueueTests(unittest.TestCase):
         queue.enqueue("inv-100")
         queue.enqueue("inv-100")
         self.assertEqual(queue.pending(), ["inv-100"])
+
+    def test_many_retries_leave_one_pending_invoice(self):
+        queue = InvoiceQueue()
+        for _ in range(5):
+            queue.enqueue("inv-200")
+        self.assertEqual(queue.pending(), ["inv-200"])
+
+    def test_retry_does_not_remove_other_pending_work(self):
+        queue = InvoiceQueue()
+        queue.enqueue("inv-100")
+        queue.enqueue("inv-101")
+        queue.enqueue("inv-100")
+        self.assertEqual(queue.pending(), ["inv-100", "inv-101"])
+
+    def test_each_distinct_invoice_remains_once(self):
+        queue = InvoiceQueue()
+        for invoice_id in ["inv-300", "inv-301", "inv-300", "inv-302", "inv-301"]:
+            queue.enqueue(invoice_id)
+        self.assertEqual(queue.pending(), ["inv-300", "inv-301", "inv-302"])

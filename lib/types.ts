@@ -5,8 +5,9 @@ export type IncidentRunner = "webcontainer-node" | "pyodide" | "sandbox-java" | 
 export type IncidentAvailability = "complete" | "experimental";
 export interface IncidentFile { path: string; content: string; }
 export interface IncidentBriefing { objective: string; successCriterion: string; rootCause: string; evidence: string; }
+export interface IncidentTelemetry { impact: string; services: Array<{ name: string; status: "degraded" | "investigating" | "healthy" }>; events: Array<{ timestamp: string; source: string; message: string }>; }
 export interface IncidentExecution { language: IncidentLanguage; runner: IncidentRunner; installCommand?: string[]; testCommand: string[]; }
-export interface Incident { id: string; title: string; service: string; severity: "SEV-1" | "SEV-2" | "SEV-3"; alert: string; timeLimitSeconds: number; availability: IncidentAvailability; briefing: IncidentBriefing; files: IncidentFile[]; activeFile: string; execution: IncidentExecution; }
+export interface Incident { id: string; title: string; service: string; severity: "SEV-1" | "SEV-2" | "SEV-3"; alert: string; timeLimitSeconds: number; availability: IncidentAvailability; briefing: IncidentBriefing; telemetry: IncidentTelemetry; stakeholderMessages: StakeholderMessage[]; files: IncidentFile[]; activeFile: string; execution: IncidentExecution; }
 export interface IncidentSummary { id: string; title: string; language: IncidentLanguage; availability: IncidentAvailability; }
 export interface FixCandidate { id: string; title: string; rationale: string; faultTag: FaultTag; patch: string; targetFile?: string; }
 export interface StakeholderMessage { id: string; role: StakeholderRole; author: string; body: string; timestamp: string; }

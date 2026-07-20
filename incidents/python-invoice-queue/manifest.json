@@ -4,13 +4,31 @@
   "severity": "SEV-2",
   "alert": "Duplicate invoice work items are appearing after a retry.",
   "timeLimitSeconds": 900,
-  "availability": "experimental",
+  "availability": "complete",
   "briefing": {
     "objective": "Trace why a retry can enqueue the same invoice work item more than once.",
     "successCriterion": "The Python unittest suite must show that each invoice appears only once after retries.",
     "rootCause": "The queue records every retry without checking whether that invoice is already pending.",
     "evidence": "The verification suite counts the queued invoice IDs after repeated enqueue attempts."
   },
+  "telemetry": {
+    "impact": "Retry traffic is creating duplicate invoice work and delaying reconciliation.",
+    "services": [
+      { "name": "invoice-queue", "status": "degraded" },
+      { "name": "retry-worker", "status": "investigating" },
+      { "name": "reconciliation", "status": "healthy" }
+    ],
+    "events": [
+      { "timestamp": "10:12", "source": "Alerting", "message": "Invoice queue depth grew faster than successful processing." },
+      { "timestamp": "10:15", "source": "Worker", "message": "The same invoice ID was accepted after a retry." },
+      { "timestamp": "10:18", "source": "Ledger", "message": "Reconciliation found repeated pending work for one invoice." }
+    ]
+  },
+  "stakeholderMessages": [
+    { "id": "maya-python", "role": "pm", "author": "Maya - PM", "body": "Reconciliation is delayed by duplicate invoice work. Can we contain retries before the next settlement run?", "timestamp": "10:20" },
+    { "id": "jon-python", "role": "senior", "author": "Jon - Senior Eng", "body": "Before changing ordering, what invariant should remain true when the same invoice is retried?", "timestamp": "10:22" },
+    { "id": "pair-python", "role": "ai-pair", "author": "AI Pair", "body": "I found three plausible queue changes. I would trace membership separately from presentation before choosing one.", "timestamp": "10:23" }
+  ],
   "serviceDirectory": "invoice-queue",
   "activeFile": "src/invoice_queue.py",
   "execution": {

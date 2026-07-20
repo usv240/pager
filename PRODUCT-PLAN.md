@@ -8,8 +8,8 @@ Real incident platforms such as Rootly and FireHydrant coordinate responders, au
 
 ## Current state
 
-- **Strong:** realistic TypeScript checkout artifact; browser runner; deterministic test authority; incident framing; credential flow; deployed production build.
-- **Weak:** recommendation cards disclose which advice is right or wrong; the current rationale leaks the diagnosis; there is no visible learner decision trail or guided completion path; Python is experimental but appears alongside the finished mission.
+- **Strong:** complete TypeScript checkout and Python invoice-queue artifacts; browser runners; deterministic test authority; neutral AI-oversight decisions; incident framing; guided completion; credential flow; deployed production build.
+- **Weak:** final browser smoke coverage and public demo materials remain release work; Java and C++ require isolated compiler sandboxes before they can be offered truthfully.
 - **Do not expand yet:** Java, C++, accounts, leaderboards, dashboards, or a broad content catalog. The rules reward a coherent runnable product, not surface area.
 
 ## Judge-ready target
@@ -36,9 +36,9 @@ Real incident platforms such as Rootly and FireHydrant coordinate responders, au
 | --- | --- | --- | --- |
 | P0 | Neutral recommendation-review UX, decision trail, progress state, and accessible error/output surfaces | Ujwal | A learner cannot infer the correct answer from a card before acting; decisions are recorded in UI state. |
 | P0 | Author three full candidate diffs, hidden fault tags, teaching feedback, stakeholder beats, and five eval transcripts | Subbu | Each wrong proposal is plausible, applies a real patch, and fails the acceptance test for its stated reason. |
-| P0 | Wire Subbu's agent/eval artifacts through the existing interface and run the complete TypeScript demo | Ujwal after Subbu push | Reject wrong proposal, apply correct repair, real test passes, credential mints. |
-| P1 | Add mission brief, root-cause debrief, and a judge-safe experimental-mission state | Ujwal | The default route has one obvious complete learning path; experimental content cannot be mistaken for finished curriculum. |
-| P1 | Add incident content metadata and debrief copy to the manifest | Subbu | Content lives with the incident, not hardcoded into UI components. |
+| P0 | Wire authored agent/eval artifacts through both complete missions | Ujwal + Subbu | Reject wrong proposal, apply correct repair, real test passes, credential mints. |
+| P1 | Add mission brief, root-cause debrief, and a guided first-run state | Ujwal | The default Python route has one obvious complete learning path and TypeScript remains equally playable. |
+| P1 | Keep incident narrative and learning content manifest-owned | Ujwal + Subbu | Base stakeholder, telemetry, briefing, and debrief content live with each incident artifact, not UI components. |
 | P2 | Record 3-minute demo and publish Devpost materials | Ujwal + Subbu | Shows the full loop, Codex/GPT-5.6 collaboration, repo, deployed URL, and `/feedback` session ID. |
 
 ## Subbu handoff — July 19, 2026
@@ -53,4 +53,4 @@ Real incident platforms such as Rootly and FireHydrant coordinate responders, au
 
 ## Definition of done
 
-The default Pager route opens one complete TypeScript mission. A judge can understand the goal in seconds, make a genuinely uncertain AI-oversight decision, inspect and modify real code, execute a real acceptance suite, receive a concise debrief, and reach a credential only through verified evidence.
+The default Pager route opens the complete Python mission, with the complete TypeScript mission one click away. A judge can understand either goal in seconds, make a genuinely uncertain AI-oversight decision, inspect and modify real code, execute a real acceptance suite, receive a concise debrief, and reach a credential only through verified evidence.

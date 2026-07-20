@@ -19,7 +19,7 @@ Built for **OpenAI Build Week** with **Codex + GPT-5.6**. Track: **Education**.
 
 **The 2 PM Incident** is a 2,519-line TypeScript checkout service with a planted race condition. Two concurrent checkout calls can both charge the same order; the losing request misleadingly looks like a payment-gateway failure. The mission's acceptance test distinguishes a symptom-only fix from a repair that actually guarantees one charge.
 
-Pager also includes an **experimental Python/Pyodide runner** and a small Python incident to prove the language-runner architecture. The TypeScript mission is the fully authored v1 learning experience.
+Pager includes two complete, execution-verified incidents: the default Python/Pyodide queue-retry incident and the TypeScript checkout race incident. Both use authored AI guidance and deterministic verification.
 
 ## Run locally
 
@@ -32,8 +32,8 @@ npm run dev
 
 Open `http://localhost:3000`. Choose a mission from the selector:
 
+- **The Invoice Queue Retry** - default Python incident executed in Pyodide.
 - **The 2 PM Incident** - TypeScript executed in WebContainer.
-- **The Invoice Queue Retry** - experimental Python executed in Pyodide.
 
 ### Enable Live AI Pair locally (optional)
 
@@ -69,8 +69,8 @@ npm run build
 - `incidents/<id>/manifest.json` defines a mission's language, runner, timing, source root, and test command.
 - `engine/runners/` selects an execution runtime. Only verified runners are enabled for learners.
 - `webcontainer-node` runs the TypeScript mission's real `npm test` suite in the browser.
-- `pyodide` runs standard-library Python `unittest` fixtures in the browser; it remains experimental pending final browser smoke testing.
-- `lib/mocks/` supplies the current authored TypeScript stakeholder and AI-pair content. Live model agents stay behind the same interface and will not change deterministic verification.
+- `pyodide` runs standard-library Python `unittest` fixtures in the browser; final browser smoke testing remains a release gate for the deployed build.
+- Each incident manifest owns its briefing, telemetry, and base stakeholder content. Live model agents stay behind the same interface and will not change deterministic verification.
 - `app/api/agents/ask/` is the server-only optional Live AI Pair endpoint. It requires `OPENAI_API_KEY`, preserves the no-answer-reveal boundary, and never determines mission completion.
 
 Java and C++ are intentionally not presented as supported. They require isolated compiler sandboxes before Pager can honestly execute their missions.
@@ -78,6 +78,11 @@ Java and C++ are intentionally not presented as supported. They require isolated
 ## Deploy
 
 Pager is a standard Next.js App Router application and deploys to Vercel. The included cross-origin isolation headers are required for WebContainer execution. Deploy the `main` branch only after the browser verification flow has been smoke-tested.
+
+## Submission handoff
+
+- [`DEMO-SCRIPT.md`](DEMO-SCRIPT.md) contains the judge-ready 3-minute walkthrough.
+- [`DEVPOST-HANDOFF.md`](DEVPOST-HANDOFF.md) contains the project copy, proof points, and submission checklist.
 
 ## How we built with Codex
 

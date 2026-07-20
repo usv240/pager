@@ -1,0 +1,156 @@
+.workspace-shell {
+  background:
+    radial-gradient(900px 500px at 88% -8%, color-mix(in srgb, var(--blue) 10%, transparent), transparent 66%),
+    radial-gradient(620px 420px at 8% 54%, color-mix(in srgb, var(--green) 5%, transparent), transparent 72%);
+}
+
+.workspace-frame {
+  margin: 0 24px;
+  border: 1px solid color-mix(in srgb, var(--line) 84%, var(--blue));
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, .2), inset 0 1px 0 rgba(255, 255, 255, .025);
+}
+
+.workspace-alert {
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(101, 26, 41, .18);
+}
+
+.workspace-alert::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--red) 16%, transparent), 0 0 16px var(--red);
+  content: "";
+}
+
+.workspace-rail-header,
+.workspace-console-header,
+.workspace-editor-tabs {
+  background: linear-gradient(100deg, color-mix(in srgb, var(--panel) 92%, var(--blue)), var(--panel));
+}
+
+.workspace-tabs button {
+  transition: color .16s ease, background .16s ease, box-shadow .16s ease;
+}
+
+.workspace-tabs button:hover:not(.active) {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--blue) 5%, var(--panel));
+}
+
+.workspace-criterion,
+.workspace-agent-boundary {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025), 0 8px 22px rgba(0, 0, 0, .08);
+}
+
+.workspace-message {
+  position: relative;
+  transition: padding .16s ease, background .16s ease;
+}
+
+.workspace-message:hover {
+  margin: 0 -.5rem;
+  padding-right: .5rem;
+  padding-left: .5rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--blue) 5%, var(--panel));
+}
+
+.workspace-recommendation {
+  position: relative;
+  padding-left: .7rem;
+  transition: background .16s ease, transform .16s ease;
+}
+
+.workspace-recommendation::before {
+  position: absolute;
+  top: 1rem;
+  bottom: 1rem;
+  left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(var(--blue), color-mix(in srgb, var(--blue) 0%, transparent));
+  content: "";
+}
+
+.workspace-recommendation:hover {
+  background: color-mix(in srgb, var(--blue) 4%, var(--panel));
+  transform: translateX(2px);
+}
+
+.workspace-runner {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--canvas) 70%, var(--blue)), color-mix(in srgb, var(--canvas) 60%, var(--panel)));
+}
+
+.workspace-run-button {
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--blue) 25%, transparent);
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+
+.workspace-run-button:hover:not(:disabled) {
+  box-shadow: 0 11px 24px color-mix(in srgb, var(--blue) 35%, transparent);
+  transform: translateY(-1px);
+}
+
+.workspace-verification-resizer {
+  position: relative;
+  z-index: 4;
+  height: 8px;
+  cursor: row-resize;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 88%, var(--canvas));
+  touch-action: none;
+  outline: none;
+}
+
+.workspace-verification-resizer::after {
+  position: absolute;
+  top: 3px;
+  right: 48%;
+  left: 48%;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+  content: "";
+}
+
+.workspace-verification-resizer:hover,
+.workspace-verification-resizer:focus-visible {
+  background: color-mix(in srgb, var(--blue) 10%, var(--panel));
+}
+
+.workspace-verification-resizer:hover::after,
+.workspace-verification-resizer:focus-visible::after {
+  background: var(--blue);
+}
+
+.workspace-verification-drawer {
+  height: var(--verification-height, 240px);
+  max-height: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
+}
+
+.workspace-row-resizing,
+.workspace-row-resizing * {
+  cursor: row-resize !important;
+  user-select: none !important;
+}
+
+@media (max-width: 1050px) {
+  .workspace-frame { margin: 0 16px; }
+}
+
+@media (max-width: 800px) {
+  .workspace-frame { margin: 0; border-right: 0; border-left: 0; border-radius: 0; }
+  .workspace-verification-resizer { display: none; }
+  .workspace-verification-drawer { height: auto; max-height: 360px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-tabs button,
+  .workspace-message,
+  .workspace-recommendation,
+  .workspace-run-button { transition: none; }
+}

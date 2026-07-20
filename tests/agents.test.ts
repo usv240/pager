@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { checkout2pmCandidates } from "../lib/agents/candidates/checkout-2pm";
+import { candidatesForFiles } from "../lib/agents/candidates";
+import { pythonInvoiceQueueCandidates } from "../lib/agents/candidates/python-invoice-queue";
 import { requestAgentText } from "../lib/agents/openai";
 import { mayaMessages } from "../lib/agents/personas/maya";
 import { jonMessages } from "../lib/agents/personas/jon";
@@ -72,6 +74,22 @@ describe("authored checkout candidates", () => {
         patch: expect.stringContaining("export class CheckoutService"),
       }));
       expect(candidate.patch).toContain("async processCheckout");
+      expect(candidate.teaching.split(".").filter(Boolean).length).toBeGreaterThanOrEqual(2);
+    }
+  });
+});
+
+describe("authored Python candidates", () => {
+  test("use complete queue replacements and are selected for the Python incident", () => {
+    expect(pythonInvoiceQueueCandidates.map((candidate) => candidate.id)).toEqual([
+      "normalize-invoice-id",
+      "sort-pending-invoices",
+      "deduplicate-pending-invoice",
+    ]);
+    expect(candidatesForFiles(["src/invoice_queue.py"])).toEqual(pythonInvoiceQueueCandidates);
+    for (const candidate of pythonInvoiceQueueCandidates) {
+      expect(candidate.targetFile).toBe("src/invoice_queue.py");
+      expect(candidate.patch).toContain("class InvoiceQueue");
       expect(candidate.teaching.split(".").filter(Boolean).length).toBeGreaterThanOrEqual(2);
     }
   });

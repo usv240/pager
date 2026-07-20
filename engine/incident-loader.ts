@@ -29,7 +29,7 @@ export async function listIncidents(): Promise<IncidentSummary[]> {
 export async function loadIncident(requestedId?: string): Promise<Incident> {
   const incidentsRoot = path.join(process.cwd(), "incidents");
   const incidentDirectories = await readdir(incidentsRoot, { withFileTypes: true });
-  const selectedId = requestedId ?? process.env.PAGER_INCIDENT_ID;
+  const selectedId = requestedId ?? process.env.PAGER_INCIDENT_ID ?? "python-invoice-queue";
   const incidentDirectory = incidentDirectories.find((entry) => entry.isDirectory() && entry.name === selectedId)
     ?? incidentDirectories.find((entry) => entry.isDirectory());
   if (!incidentDirectory) throw new Error("No incident artifact is available.");
@@ -40,5 +40,5 @@ export async function loadIncident(requestedId?: string): Promise<Incident> {
   const files = await collectFiles(serviceRoot);
   if (!files.some((file) => file.path === manifest.activeFile)) throw new Error("Incident manifest references a missing active file.");
 
-  return { id: incidentDirectory.name, title: manifest.title, service: manifest.service, severity: manifest.severity, alert: manifest.alert, timeLimitSeconds: manifest.timeLimitSeconds, availability: manifest.availability, briefing: manifest.briefing, files, activeFile: manifest.activeFile, execution: manifest.execution };
+  return { id: incidentDirectory.name, title: manifest.title, service: manifest.service, severity: manifest.severity, alert: manifest.alert, timeLimitSeconds: manifest.timeLimitSeconds, availability: manifest.availability, briefing: manifest.briefing, telemetry: manifest.telemetry, stakeholderMessages: manifest.stakeholderMessages, files, activeFile: manifest.activeFile, execution: manifest.execution };
 }

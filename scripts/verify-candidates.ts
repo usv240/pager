@@ -1,6 +1,5 @@
 import { spawn } from "node:child_process";
-import { cp, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { cp, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { checkout2pmCandidates } from "../lib/agents/candidates/checkout-2pm";
@@ -118,6 +117,7 @@ interface VerificationResult {
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDirectory, "..");
 const serviceRoot = join(repositoryRoot, "incidents", "checkout-2pm", "checkout-service");
+const verificationRoot = join(repositoryRoot, ".candidate-verification");
 
 function normalizePath(value: string): string {
   return value.split(sep).join("/");
@@ -397,7 +397,8 @@ function collectReportFacts(
 
 async function verifyCandidate(candidate: (typeof checkout2pmCandidates)[number]): Promise<VerificationResult> {
   const expected = expectedOutcomeFor(candidate.id);
-  const temporaryRoot = await mkdtemp(join(tmpdir(), `pager-${candidate.id}-`));
+  await mkdir(verificationRoot, { recursive: true });
+  const temporaryRoot = await mkdtemp(join(verificationRoot, `${candidate.id}-`));
   const temporaryServiceRoot = join(temporaryRoot, "checkout-service");
   const reportPath = join(temporaryRoot, "vitest-report.json");
   const observationPath = join(temporaryRoot, "checkout-observation.json");
@@ -536,8 +537,17 @@ async function main(): Promise<void> {
   console.log(`Service source: ${serviceRoot}`);
   await validateArtifacts();
 
+  const requestedCandidateIds = process.argv.slice(2);
+  const candidates =
+    requestedCandidateIds.length === 0
+      ? checkout2pmCandidates
+      : checkout2pmCandidates.filter((candidate) => requestedCandidateIds.includes(candidate.id));
+  if (requestedCandidateIds.length > 0 && candidates.length !== requestedCandidateIds.length) {
+    throw new Error(`Unknown candidate ID. Expected one of: ${expectedCandidateIds.join(", ")}.`);
+  }
+
   const results: VerificationResult[] = [];
-  for (const candidate of checkout2pmCandidates) {
+  for (const candidate of candidates) {
     results.push(await verifyCandidate(candidate));
   }
 

@@ -1,4 +1,5 @@
 import type { FixCandidate, FixContext } from "../types";
+import { candidatesForFiles } from "./candidates";
 import { checkout2pmCandidates } from "./candidates/checkout-2pm";
 import { requestAgentText } from "./openai";
 import { buildAiPairPrompt } from "./prompts/ai-pair";
@@ -33,8 +34,10 @@ function parsePresentations(text: string): CandidatePresentation[] | null {
   }
 }
 
-export async function proposeFix(_context: FixContext): Promise<FixCandidate[]> {
-  const authored = checkout2pmCandidates.map((candidate) => ({ ...candidate }));
+export async function proposeFix(context: FixContext): Promise<FixCandidate[]> {
+  const candidates = candidatesForFiles(context.files.map((file) => file.path));
+  const authored = candidates.map((candidate) => ({ ...candidate }));
+  if (candidates !== checkout2pmCandidates) return authored;
   if (isMockMode()) return authored;
 
   const text = await requestAgentText(buildAiPairPrompt(checkout2pmCandidates));

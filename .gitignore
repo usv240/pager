@@ -14,6 +14,7 @@ next-env.d.ts
 
 # testing
 /coverage
+/.candidate-verification/
 
 # env
 .env

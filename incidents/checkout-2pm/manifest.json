@@ -11,6 +11,24 @@
     "rootCause": "Both requests read the same pending order, then each created an external charge before either could complete the strict state transition.",
     "evidence": "The decisive check compares the two settled checkout results with the ledger count; response handling alone cannot undo a charge already created."
   },
+  "telemetry": {
+    "impact": "Three customer duplicate-charge reports; support is holding replies pending containment.",
+    "services": [
+      { "name": "checkout-service", "status": "degraded" },
+      { "name": "clearwater-payments", "status": "investigating" },
+      { "name": "order-ledger", "status": "healthy" }
+    ],
+    "events": [
+      { "timestamp": "14:00", "source": "Alerting", "message": "Duplicate charge anomaly crossed the checkout-service threshold." },
+      { "timestamp": "14:04", "source": "Support", "message": "Three matching customer reports are open." },
+      { "timestamp": "14:06", "source": "Trace", "message": "Two checkout requests reached the payment boundary for one order." }
+    ]
+  },
+  "stakeholderMessages": [
+    { "id": "pm-1", "role": "pm", "author": "Maya - PM", "body": "Support has three duplicate-charge reports. Can we give them an ETA in 15 minutes?", "timestamp": "2:04 PM" },
+    { "id": "senior-1", "role": "senior", "author": "Jon - Senior Eng", "body": "Before changing gateway retries, what happens when two requests read this order at the same time?", "timestamp": "2:06 PM" },
+    { "id": "pair-1", "role": "ai-pair", "author": "AI Pair", "body": "I found two plausible paths. I would validate the interleaving before shipping either one.", "timestamp": "2:07 PM" }
+  ],
   "serviceDirectory": "checkout-service",
   "activeFile": "src/services/checkout-service.ts",
   "execution": {

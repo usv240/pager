@@ -1,0 +1,50 @@
+.workspace-frame {
+  grid-template-columns: var(--workspace-left-width, 280px) 8px minmax(420px, 1fr) 8px var(--workspace-right-width, 360px);
+}
+
+.workspace-resizer {
+  position: relative;
+  z-index: 4;
+  width: 8px;
+  cursor: col-resize;
+  background: var(--line);
+  touch-action: none;
+  outline: none;
+}
+
+.workspace-resizer::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+  background: transparent;
+  content: "";
+}
+
+.workspace-resizer:hover,
+.workspace-resizer:focus-visible {
+  background: color-mix(in srgb, var(--blue) 60%, var(--line));
+}
+
+.workspace-resizer:hover::after,
+.workspace-resizer:focus-visible::after {
+  background: var(--blue);
+}
+
+.workspace-resizing,
+.workspace-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+@media (max-width: 1050px) {
+  .workspace-frame {
+    grid-template-columns: var(--workspace-left-width, 220px) 8px minmax(0, 1fr) 8px var(--workspace-right-width, 290px);
+  }
+}
+
+@media (max-width: 800px) {
+  .workspace-resizer { display: none; }
+  .workspace-frame { display: block; }
+}

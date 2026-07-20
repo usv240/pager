@@ -1,4 +1,4 @@
-import { checkout2pmCandidates } from "@/lib/agents/candidates/checkout-2pm";
+import { allAuthoredCandidates } from "@/lib/agents/candidates";
 
 type Decision = "applied" | "rejected";
 
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const payload: unknown = await request.json();
     if (!isRevealRequest(payload)) return Response.json({ error: "Invalid reveal request." }, { status: 400 });
 
-    const candidate = checkout2pmCandidates.find(({ id }) => id === payload.candidateId);
+    const candidate = allAuthoredCandidates.find(({ id }) => id === payload.candidateId);
     if (!candidate) return Response.json({ error: "Unknown candidate." }, { status: 400 });
 
     // Ujwal: call this only after recording the learner's applied/rejected decision.

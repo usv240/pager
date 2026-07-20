@@ -1,0 +1,30 @@
+.workspace-guide-jump {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.workspace-guide-jump:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.workspace-guide-backdrop {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.workspace-guide-spotlight {
+  position: fixed;
+  z-index: 0;
+  pointer-events: none;
+  border: 2px solid var(--blue);
+  border-radius: 8px;
+  box-shadow: 0 0 0 9999px rgba(3, 10, 18, .74), 0 0 0 5px rgba(97, 153, 255, .14);
+  transition: top .22s ease, left .22s ease, width .22s ease, height .22s ease;
+}
+
+.workspace-guide {
+  position: relative;
+  z-index: 1;
+}
