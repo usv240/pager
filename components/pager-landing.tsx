@@ -25,7 +25,7 @@ export function PagerLanding() {
       <aside className="incident-preview" aria-label="Mission preview">
         <div className="preview-heading"><span className="live-dot" aria-hidden="true" />LIVE INCIDENT <span>SEV-1</span></div>
         <h2>Duplicate checkout charges</h2>
-        <p>Two simultaneous requests may both reach the payment provider before the order is claimed.</p>
+        <p>Customers report duplicate charges. The logs blame the payment gateway. The AI pair has three fixes ready — at most one of them holds.</p>
         <dl>
           <div><dt>Service</dt><dd>TypeScript checkout</dd></div>
           <div><dt>Decision</dt><dd>3 AI proposals</dd></div>

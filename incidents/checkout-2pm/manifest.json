@@ -2,12 +2,12 @@
   "title": "The 2 PM Incident",
   "service": "checkout-service",
   "severity": "SEV-1",
-  "alert": "A production anomaly is active in checkout-service. Investigate before shipping a fix.",
+  "alert": "Checkout 502s are spiking and support has multiple duplicate-charge reports — customers may be paying twice for one order.",
   "timeLimitSeconds": 1200,
   "availability": "complete",
   "briefing": {
-    "objective": "Contain duplicate checkout charges by tracing what two concurrent requests can observe before either payment completes.",
-    "successCriterion": "The concurrency acceptance suite must complete both callers with exactly one Clearwater charge.",
+    "objective": "Support is fielding duplicate-charge reports and checkout is returning 502s that point at the payment provider. Find the real cause, judge the AI pair's proposals, and ship only what the verification suite proves.",
+    "successCriterion": "The acceptance suite must show both checkout attempts completing with exactly one Clearwater charge.",
     "rootCause": "Both requests read the same pending order, then each created an external charge before either could complete the strict state transition.",
     "evidence": "The decisive check compares the two settled checkout results with the ledger count; response handling alone cannot undo a charge already created."
   },
