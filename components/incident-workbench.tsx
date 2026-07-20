@@ -40,6 +40,7 @@ export function IncidentWorkbench() {
   const [executionError, setExecutionError] = useState("");
   const [completionMessage, setCompletionMessage] = useState("");
   const [running, setRunning] = useState(false);
+  const [verificationProgress, setVerificationProgress] = useState("");
   const [leftTab, setLeftTab] = useState<LeftTab>("brief");
   const [rightTab, setRightTab] = useState<RightTab>("channel");
   const [agentQuestion, setAgentQuestion] = useState("");
@@ -54,6 +55,12 @@ export function IncidentWorkbench() {
     void fetch("/api/incidents")
       .then((response) => response.json() as Promise<IncidentSummary[]>)
       .then(setCatalog);
+  }, []);
+
+  useEffect(() => {
+    const updateProgress = (event: Event) => setVerificationProgress((event as CustomEvent<string>).detail);
+    window.addEventListener("pager:webcontainer-progress", updateProgress);
+    return () => window.removeEventListener("pager:webcontainer-progress", updateProgress);
   }, []);
 
   useEffect(() => {
@@ -161,6 +168,7 @@ export function IncidentWorkbench() {
     if (!activeIncident || running) return;
     setExecutionError("");
     setCompletionMessage("");
+    setVerificationProgress("");
     setRunning(true);
     setLeftTab("evidence");
     try {
@@ -181,6 +189,7 @@ export function IncidentWorkbench() {
       setExecutionError(error instanceof Error ? error.message : "The verification runner could not start.");
     } finally {
       setRunning(false);
+      setVerificationProgress("");
     }
   };
   const askAgent = async () => {
@@ -288,7 +297,7 @@ export function IncidentWorkbench() {
           <label className="workspace-file-picker"><span>Open file</span><select value={activeFile} onChange={(event) => openFile(event.target.value)}>{files.map((file) => <option key={file.path} value={file.path}>{file.path}</option>)}</select></label>
           <div className="workspace-editor-surface"><CodeEditor language={incident.execution.language} path={activeFile} value={source} onChange={(content) => updateSource(activeFile, content)} /></div>
           <section className="workspace-runner" aria-label="Verification controls">
-            <div><span className="workspace-eyebrow">VERIFICATION</span><p>{running ? "Running the actual acceptance suite…" : result ? result.summary : "Changes are local to this incident. The suite decides what ships."}</p></div>
+            <div><span className="workspace-eyebrow">VERIFICATION</span><p>{running ? verificationProgress || "Running the real acceptance suite…" : result ? result.summary : "Changes are local to this incident. The suite decides what ships."}</p></div>
             <button className="workspace-run-button" onClick={() => void verify()} disabled={running}>{running ? "Running tests…" : "Run verification"}</button>
           </section>
           {completionMessage && <p className="workspace-completion" role="status">{completionMessage}</p>}
