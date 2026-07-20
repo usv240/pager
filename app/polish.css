@@ -131,7 +131,7 @@
   z-index: 60;
   border-color: color-mix(in srgb, var(--blue) 62%, var(--line));
   background: var(--panel);
-  color: var(--ink);
+  color: var(--blue);
   box-shadow: 0 16px 38px rgba(0, 0, 0, .32);
 }
 
@@ -445,16 +445,10 @@
   border-radius: 999px;
   background: var(--panel);
   box-shadow: 0 12px 30px rgba(0, 0, 0, .24);
-  color: var(--ink);
+  color: var(--blue);
   cursor: pointer;
   padding: .68rem .78rem;
   font: 800 .7rem Manrope, sans-serif;
-}
-
-.workspace-agent-dock span {
-  border-left: 1px solid var(--line);
-  color: var(--blue);
-  padding-left: .45rem;
 }
 
 .workspace-agent-dock:hover {
