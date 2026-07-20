@@ -1,0 +1,40 @@
+{
+  "title": "The Webhook Replay",
+  "service": "webhook-ingest",
+  "severity": "SEV-2",
+  "alert": "Provider retries are replaying the same fulfillment event.",
+  "timeLimitSeconds": 900,
+  "availability": "complete",
+  "briefing": {
+    "objective": "Prevent a webhook retry from creating duplicate fulfillment work while continuing to accept new event IDs.",
+    "successCriterion": "The Vitest acceptance suite must show exactly one processed event for each event ID after replay.",
+    "rootCause": "The ingestion ledger records every delivery instead of recognizing an event that has already been processed.",
+    "evidence": "The decisive check replays one provider event, then compares the processed-event ledger with the expected unique IDs."
+  },
+  "telemetry": {
+    "impact": "Fulfillment has started duplicate packing jobs after the provider redelivered successful webhooks.",
+    "services": [
+      { "name": "webhook-ingest", "status": "degraded" },
+      { "name": "provider-gateway", "status": "investigating" },
+      { "name": "fulfillment", "status": "healthy" }
+    ],
+    "events": [
+      { "timestamp": "16:31", "source": "Alerting", "message": "Processed fulfillment events exceeded unique provider event IDs." },
+      { "timestamp": "16:34", "source": "Gateway", "message": "evt-443 was redelivered after the provider timed out waiting for an acknowledgement." },
+      { "timestamp": "16:36", "source": "Fulfillment", "message": "Two packing jobs reference the same provider event." }
+    ]
+  },
+  "stakeholderMessages": [
+    { "id": "maya-webhook", "role": "pm", "author": "Maya - PM", "body": "Operations paused the duplicate packing jobs. Can we contain replays without losing a new delivery?", "timestamp": "4:37 PM" },
+    { "id": "jon-webhook", "role": "senior", "author": "Jon - Senior Eng", "body": "A provider retry is normal. Which identifier tells us that this delivery has already produced work?", "timestamp": "4:39 PM" },
+    { "id": "pair-webhook", "role": "ai-pair", "author": "AI Pair", "body": "I found three plausible edits. I would trace what the ledger represents before choosing a change.", "timestamp": "4:40 PM" }
+  ],
+  "serviceDirectory": "webhook-replay",
+  "activeFile": "src/event_ledger.ts",
+  "execution": {
+    "language": "typescript",
+    "runner": "webcontainer-node",
+    "installCommand": ["npm", "install"],
+    "testCommand": ["npm", "test"]
+  }
+}

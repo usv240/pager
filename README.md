@@ -19,7 +19,7 @@ Built for **OpenAI Build Week** with **Codex + GPT-5.6**. Track: **Education**.
 
 **The 2 PM Incident** is a 2,519-line TypeScript checkout service with a planted race condition. Two concurrent checkout calls can both charge the same order; the losing request misleadingly looks like a payment-gateway failure. The mission's acceptance test distinguishes a symptom-only fix from a repair that actually guarantees one charge.
 
-Pager includes two complete, execution-verified incidents: the default Python/Pyodide queue-retry incident and the TypeScript checkout race incident. Both use authored AI guidance and deterministic verification.
+Pager includes four complete, execution-verified incidents: two Python/Pyodide retry and reservation labs, plus two TypeScript/WebContainer concurrency and webhook-replay labs. Every lab uses authored AI guidance and deterministic verification.
 
 ## Run locally
 
@@ -33,7 +33,9 @@ npm run dev
 Open `http://localhost:3000`. Choose a mission from the selector:
 
 - **The Invoice Queue Retry** - default Python incident executed in Pyodide.
+- **The Inventory Reservation Retry** - Python reservation replay incident executed in Pyodide.
 - **The 2 PM Incident** - TypeScript executed in WebContainer.
+- **The Webhook Replay** - TypeScript provider-event replay incident executed in WebContainer.
 
 ### Enable Live AI Pair locally (optional)
 
@@ -71,6 +73,7 @@ npm run build
 - `webcontainer-node` runs the TypeScript mission's real `npm test` suite in the browser.
 - `pyodide` runs standard-library Python `unittest` fixtures in the browser; final browser smoke testing remains a release gate for the deployed build.
 - Each incident manifest owns its briefing, telemetry, and base stakeholder content. Live model agents stay behind the same interface and will not change deterministic verification.
+- Java and C++ remain explicitly upcoming until browser-safe runners, real artifacts, and deterministic test suites are available.
 - `app/api/agents/ask/` is the server-only optional Live AI Pair endpoint. It requires `OPENAI_API_KEY`, preserves the no-answer-reveal boundary, and never determines mission completion.
 
 Java and C++ are intentionally not presented as supported. They require isolated compiler sandboxes before Pager can honestly execute their missions.

@@ -21,6 +21,7 @@ type LeftTab = "brief" | "signals" | "files" | "evidence";
 type RightTab = "channel" | "pair";
 type AiQuestion = { question: string; answer: string };
 type ResizablePane = "left" | "right";
+type IntelligencePaneMode = "default" | "minimized" | "maximized";
 
 const defaultPaneWidths = { left: 280, right: 360 };
 const paneLimits = { left: { min: 220, max: 440 }, right: { min: 280, max: 520 } };
@@ -30,6 +31,7 @@ const defaultVerificationHeight = 220;
 export function IncidentWorkbench() {
   const runnerRuntimeRef = useRef<RunnerRuntime | null>(null);
   const missionStartedAtRef = useRef<number | null>(null);
+  const topbarRef = useRef<HTMLElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [incident, setIncident] = useState<Incident>();
@@ -53,10 +55,12 @@ export function IncidentWorkbench() {
   const [agentQuestionError, setAgentQuestionError] = useState("");
   const [askingAgent, setAskingAgent] = useState(false);
   const [agentChatOpen, setAgentChatOpen] = useState(false);
+  const [intelligencePaneMode, setIntelligencePaneMode] = useState<IntelligencePaneMode>("default");
   const [guideOpen, setGuideOpen] = useState(false);
   const [verificationOpen, setVerificationOpen] = useState(true);
   const [paneWidths, setPaneWidths] = useState(defaultPaneWidths);
   const [verificationHeight, setVerificationHeight] = useState(defaultVerificationHeight);
+  const [topbarHeight, setTopbarHeight] = useState(64);
   const selectedIncidentId = searchParams.get("incident") ?? "";
   const missionHref = (incidentId: string) => `/?play=1&incident=${encodeURIComponent(incidentId)}`;
 
@@ -105,6 +109,16 @@ export function IncidentWorkbench() {
   }, []);
 
   useEffect(() => {
+    const topbar = topbarRef.current;
+    if (!topbar) return;
+    const updateHeight = () => setTopbarHeight(Math.ceil(topbar.getBoundingClientRect().height));
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(topbar);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
     const query = selectedIncidentId ? `?incident=${encodeURIComponent(selectedIncidentId)}` : "";
     void fetch(`/api/incident${query}`)
       .then((response) => response.json() as Promise<Incident>)
@@ -128,6 +142,7 @@ export function IncidentWorkbench() {
         setAgentQuestions([]);
         setAgentQuestionError("");
         setAgentChatOpen(false);
+        setIntelligencePaneMode("default");
         setGuideOpen(window.localStorage.getItem("pager-workspace-guide-v2-dismissed") !== "1");
         setVerificationOpen(true);
       });
@@ -135,11 +150,19 @@ export function IncidentWorkbench() {
 
   const source = files.find((file) => file.path === activeFile)?.content ?? "";
   const activeIncident = useMemo(() => incident && { ...incident, files, activeFile }, [incident, files, activeFile]);
-  const supportsAgents = incident?.id === "checkout-2pm" || incident?.id === "python-invoice-queue";
+  const supportsAgents = Boolean(incident);
   const usesDynamicStakeholders = incident?.id === "checkout-2pm";
   const reviewedCount = Object.keys(decisions).length;
   const passedTestCount = result?.tests.filter((test) => test.passed).length ?? 0;
   const failedTestCount = result?.tests.length ? result.tests.length - passedTestCount : 0;
+  const reviewingFix = fixes.find((fix) => fix.id === reviewingFixId);
+  const reviewingTargetPath = reviewingFix?.targetFile ?? activeFile;
+  const reviewingCurrentSource = files.find((file) => file.path === reviewingTargetPath)?.content ?? "";
+  const effectiveRightPaneWidth = intelligencePaneMode === "minimized"
+    ? 48
+    : intelligencePaneMode === "maximized"
+      ? paneLimits.right.max
+      : paneWidths.right;
   const gamePhase = useMemo<AgentGamePhase>(() => {
     if (result && !result.passed) return "after-tests-fail";
     if (fixes.some((fix) => decisions[fix.id] === "applied" && reveals[fix.id]?.faultTag !== "verified" && reveals[fix.id] !== undefined)) return "after-wrong-fix";
@@ -213,6 +236,10 @@ export function IncidentWorkbench() {
     if (decision === "applied") updateSource(fix.targetFile ?? activeFile, fix.patch);
     void requestReveal(fix, decision);
     setReviewingFixId("");
+  };
+  const startProposalReview = (fix: LearnerFix) => {
+    setActiveFile(fix.targetFile ?? activeFile);
+    setReviewingFixId(fix.id);
   };
   const verify = async () => {
     if (!activeIncident || running) return;
@@ -357,7 +384,7 @@ export function IncidentWorkbench() {
   return (
     <main className="shell workspace-shell">
       <a className="skip-link" href="#workspace-main">Skip to incident workspace</a>
-      <header className="workspace-topbar">
+      <header ref={topbarRef} className="workspace-topbar">
         <Link className="brand" href="/">PAGER</Link>
         <span className="workspace-environment">production</span>
         <label className="workspace-mission-select">
@@ -379,12 +406,12 @@ export function IncidentWorkbench() {
         </div>
       </header>
 
-      <section className={result?.passed ? "workspace-alert resolved" : "workspace-alert"} aria-live="polite">
+      <section className={result?.passed ? "workspace-alert resolved" : "workspace-alert"} style={{ "--workspace-topbar-height": `${topbarHeight}px` } as CSSProperties} aria-live="polite">
         <strong>{result?.passed ? "RESOLVED" : `${incident.severity} · INCIDENT`}</strong>
         <span>{result?.passed ? "The incident has cleared. Verification evidence is available in the left rail." : incident.alert}</span>
       </section>
 
-      <div id="workspace-main" className="workspace-frame" style={{ "--workspace-left-width": `${paneWidths.left}px`, "--workspace-right-width": `${paneWidths.right}px` } as CSSProperties}>
+      <div id="workspace-main" className={`workspace-frame workspace-intelligence-${intelligencePaneMode}`} style={{ "--workspace-left-width": `${paneWidths.left}px`, "--workspace-right-width": `${effectiveRightPaneWidth}px` } as CSSProperties}>
         <aside className="workspace-rail" aria-label="Incident context">
           <div className="workspace-rail-header">
             <span>MISSION CONTROL <InfoTip label="About mission control" className="workspace-inline-tip">Use Brief for the objective, Signals for operational context, Files to navigate the artifact, and Evidence for a concise suite summary.</InfoTip></span>
@@ -436,17 +463,35 @@ export function IncidentWorkbench() {
           {completionMessage && <p className="workspace-completion" role="status">{completionMessage}</p>}
         </section>
 
-        <div className="workspace-resizer" role="separator" aria-label="Resize incident intelligence panel" aria-orientation="vertical" aria-controls="guide-coach" aria-valuemin={paneLimits.right.min} aria-valuemax={paneLimits.right.max} aria-valuenow={paneWidths.right} tabIndex={0} onPointerDown={(event) => beginPaneResize("right", event)} onKeyDown={(event) => resizePaneWithKeyboard("right", event)} />
+        <div className="workspace-resizer workspace-console-resizer" role="separator" aria-label="Resize incident intelligence panel" aria-orientation="vertical" aria-controls="guide-coach" aria-valuemin={paneLimits.right.min} aria-valuemax={paneLimits.right.max} aria-valuenow={effectiveRightPaneWidth} tabIndex={intelligencePaneMode === "minimized" ? -1 : 0} onPointerDown={(event) => { if (intelligencePaneMode === "default") beginPaneResize("right", event); }} onKeyDown={(event) => { if (intelligencePaneMode === "default") resizePaneWithKeyboard("right", event); }} />
 
         <aside id="guide-coach" className="workspace-console" aria-label="Incident intelligence" tabIndex={-1}>
-          <div className="workspace-console-header"><div><span>INCIDENT INTELLIGENCE</span><strong>{supportsAgents ? "AI Pair and repair review" : "Python lab guide"}</strong></div><InfoTip label="How Pager evaluates you" className="workspace-intelligence-tip">AI Pair explains context and investigation. The deterministic acceptance suite validates repairs; Pager never asks an LLM to decide whether you passed.</InfoTip></div>
+          <div className="workspace-console-header">
+            <div className="workspace-console-title"><span>INCIDENT INTELLIGENCE</span><strong>{supportsAgents ? "AI Pair and repair review" : "Python lab guide"}</strong></div>
+            <div className="workspace-console-actions">
+              {intelligencePaneMode !== "minimized" && <InfoTip label="How Pager evaluates you" className="workspace-intelligence-tip">AI Pair explains context and investigation. The deterministic acceptance suite validates repairs; Pager never asks an LLM to decide whether you passed.</InfoTip>}
+              {intelligencePaneMode !== "minimized" && <button className="workspace-console-control" type="button" onClick={() => setIntelligencePaneMode((current) => current === "maximized" ? "default" : "maximized")} aria-label={intelligencePaneMode === "maximized" ? "Restore incident intelligence width" : "Maximize incident intelligence width"} title={intelligencePaneMode === "maximized" ? "Restore width" : "Maximize width"}>{intelligencePaneMode === "maximized" ? "Restore" : "Maximize"}</button>}
+              <button className="workspace-console-control" type="button" onClick={() => setIntelligencePaneMode((current) => current === "minimized" ? "default" : "minimized")} aria-label={intelligencePaneMode === "minimized" ? "Restore incident intelligence panel" : "Minimize incident intelligence panel"} title={intelligencePaneMode === "minimized" ? "Restore panel" : "Minimize panel"}>{intelligencePaneMode === "minimized" ? "Open" : "Minimize"}</button>
+            </div>
+          </div>
           {supportsAgents ? <>
             <nav className="workspace-tabs console-tabs" aria-label="Intelligence panel"><button className={rightTab === "channel" ? "active" : ""} onClick={() => setRightTab("channel")}>Incident chat <span>{channelMessages.length}</span></button><button className={rightTab === "pair" ? "active" : ""} onClick={() => setRightTab("pair")}>AI Pair <span>{fixes.length}</span></button></nav>
-            {rightTab === "channel" && <div id="guide-chat" className="workspace-channel" tabIndex={-1}>{channelMessages.map((message) => <article key={message.id} className="workspace-message"><div><strong>{message.author}</strong><time>{message.timestamp}</time></div><p>{message.body}</p></article>)}</div>}
-            {rightTab === "pair" && <div className="workspace-pair"><p className="workspace-agent-boundary">AI Pair helps you investigate the incident. Repair options are drafts: inspect their effect, then use the suite to validate what ships.</p>{fixes.map((fix, index) => { const decision = decisions[fix.id]; const reveal = reveals[fix.id]; const reviewing = reviewingFixId === fix.id; return <article key={fix.id} className={`workspace-recommendation ${decision ? "decided" : ""}`}><span>REPAIR OPTION 0{index + 1}</span><h2>{fix.title}</h2><p>{fix.rationale}</p>{decision && reveal && <p className="workspace-reveal"><b>{decision === "rejected" ? "Rejected." : "Applied."}</b> {reveal.teaching}</p>}{reviewing && <div className="workspace-decision-actions" role="group" aria-label={`Decision for ${fix.title}`}><button onClick={() => recordDecision(fix, "rejected")}>Reject</button><button onClick={() => recordDecision(fix, "applied")}>Apply</button></div>}{!decision && <button className="workspace-review-button" onClick={() => setReviewingFixId(reviewing ? "" : fix.id)} aria-expanded={reviewing}>{reviewing ? "Cancel" : "Review option"}</button>}</article>; })}<section className="workspace-agent-ask"><div><span className="workspace-eyebrow">LIVE AI PAIR</span><strong>Ask the incident coach</strong></div>{agentQuestions.map((item, index) => <article key={`${item.question}-${index}`} className="workspace-agent-answer"><p><b>You:</b> {item.question}</p><p><b>AI Pair:</b> {item.answer}</p></article>)}<label className="sr-only" htmlFor="agent-question">Ask AI Pair</label><textarea id="agent-question" value={agentQuestion} onChange={(event) => setAgentQuestion(event.target.value)} placeholder="Ask what to inspect, which invariant matters, or how to read the failure…" maxLength={700} rows={3} /><button onClick={() => void askAgent()} disabled={askingAgent || !agentQuestion.trim()}>{askingAgent ? "Thinking…" : "Ask AI Pair"}</button>{agentQuestionError && <p className="workspace-agent-error" role="alert">{agentQuestionError}</p>}<small>Questions are sent to the configured OpenAI API for investigation support only. Do not paste credentials or customer data.</small></section></div>}
+            {rightTab === "channel" && <div id="guide-chat" className="workspace-channel" tabIndex={-1}><p className="workspace-intelligence-intro">Read the incident conversation first. It explains the impact, the constraint, and the question your code must answer.</p>{channelMessages.map((message) => <article key={message.id} className="workspace-message"><div><strong>{message.author}</strong><time>{message.timestamp}</time></div><p>{message.body}</p></article>)}</div>}
+            {rightTab === "pair" && <div className="workspace-pair"><p className="workspace-agent-boundary">Use these as investigation paths, not answers. Review one proposal to compare its exact code with the current file, then use verification as the final proof.</p>{fixes.map((fix, index) => { const decision = decisions[fix.id]; const reveal = reveals[fix.id]; return <article key={fix.id} className={`workspace-recommendation ${decision ? "decided" : ""}`}><span>REPAIR OPTION 0{index + 1}</span><h2>{fix.title}</h2><p>{fix.rationale}</p>{decision && reveal && <p className="workspace-reveal"><b>{decision === "rejected" ? "Rejected." : "Applied."}</b> {reveal.teaching}</p>}{!decision && <button className="workspace-review-button" onClick={() => startProposalReview(fix)} aria-haspopup="dialog">Review code change</button>}</article>; })}<section className="workspace-agent-ask"><div><span className="workspace-eyebrow">LIVE AI PAIR</span><strong>Ask the incident coach</strong></div>{agentQuestions.map((item, index) => <article key={`${item.question}-${index}`} className="workspace-agent-answer"><p><b>You:</b> {item.question}</p><p><b>AI Pair:</b> {item.answer}</p></article>)}<label className="sr-only" htmlFor="agent-question">Ask AI Pair</label><textarea id="agent-question" value={agentQuestion} onChange={(event) => setAgentQuestion(event.target.value)} placeholder="Ask what to inspect, which invariant matters, or how to read the failure…" maxLength={700} rows={3} /><button onClick={() => void askAgent()} disabled={askingAgent || !agentQuestion.trim()}>{askingAgent ? "Thinking…" : "Ask AI Pair"}</button>{agentQuestionError && <p className="workspace-agent-error" role="alert">{agentQuestionError}</p>}<small>Questions are sent to the configured OpenAI API for investigation support only. Do not paste credentials or customer data.</small></section></div>}
           </> : <div className="workspace-python-guide"><span className="workspace-eyebrow">REAL PYTHON EXECUTION</span><h2>Prevent duplicate queue entries.</h2><p>Inspect `enqueue`, add the smallest guard that preserves queue order, then run the unittest suite. This lab is execution-ready; AI Pair decisions and credentialing remain TypeScript-mission only.</p><div><strong>Success condition</strong><p>Repeated enqueue attempts leave each invoice ID exactly once in the pending queue.</p></div></div>}
         </aside>
       </div>
+      {reviewingFix && <section className="workspace-proposal-review" role="dialog" aria-modal="true" aria-labelledby="proposal-review-title">
+        <div className="workspace-proposal-review-panel">
+          <header><div><span className="workspace-eyebrow">CODE REVIEW</span><h2 id="proposal-review-title">{reviewingFix.title}</h2><p>Compare the exact replacement before making a decision. Verification remains the final authority.</p></div><button type="button" onClick={() => setReviewingFixId("")} aria-label="Close code review">Close</button></header>
+          <div className="workspace-proposal-file">{reviewingTargetPath}</div>
+          <div className="workspace-proposal-columns">
+            <article><h3>Current code</h3><pre>{reviewingCurrentSource.split("\n").map((line, index) => <code key={`${index}-${line}`}><span>{index + 1}</span>{line || " "}</code>)}</pre></article>
+            <article><h3>Proposed code</h3><pre>{reviewingFix.patch.split("\n").map((line, index) => <code key={`${index}-${line}`}><span>{index + 1}</span>{line || " "}</code>)}</pre></article>
+          </div>
+          <footer><p>Choose based on the code and the incident invariant—not the proposal wording.</p><div className="workspace-decision-actions" role="group" aria-label={`Decision for ${reviewingFix.title}`}><button onClick={() => recordDecision(reviewingFix, "rejected")}>Reject proposal</button><button onClick={() => recordDecision(reviewingFix, "applied")}>Apply proposal</button></div></footer>
+        </div>
+      </section>}
       {supportsAgents && <><button className="workspace-agent-dock" onClick={() => setAgentChatOpen(true)} aria-expanded={agentChatOpen} aria-controls="agent-chat">Ask AI Pair <span>Coach</span></button>{agentChatOpen && <aside id="agent-chat" className="workspace-agent-chat" role="dialog" aria-modal="false" aria-label="AI Pair incident coach"><header><div><span className="workspace-eyebrow">LIVE AI PAIR</span><strong>Ask the incident coach</strong></div><button className="workspace-agent-chat-close" onClick={() => setAgentChatOpen(false)} aria-label="Close AI Pair chat">×</button></header><p className="workspace-agent-chat-intro">Ask for an investigation plan, relevant files, or help interpreting a failed test. AI explains; the suite verifies.</p><div className="workspace-agent-chat-history" aria-live="polite">{agentQuestions.length === 0 && <p className="workspace-agent-empty">No questions yet. Start with the failing invariant.</p>}{agentQuestions.map((item, index) => <article key={`${item.question}-${index}`} className="workspace-agent-answer"><p><b>You:</b> {item.question}</p><p><b>AI Pair:</b> {item.answer}</p></article>)}</div><form onSubmit={(event) => { event.preventDefault(); void askAgent(); }}><label className="sr-only" htmlFor="agent-question-chat">Ask AI Pair</label><textarea id="agent-question-chat" value={agentQuestion} onChange={(event) => setAgentQuestion(event.target.value)} placeholder="Ask what to inspect or how to read the failure…" maxLength={700} rows={3} /><div><small>Do not paste credentials or customer data.</small><button type="submit" disabled={askingAgent || !agentQuestion.trim()}>{askingAgent ? "Thinking…" : "Ask AI Pair"}</button></div>{agentQuestionError && <p className="workspace-agent-error" role="alert">{agentQuestionError}</p>}</form></aside>}</>}
       <WorkspaceGuide open={guideOpen} onClose={closeGuide} onSkip={skipGuide} onHighlight={highlightGuideArea} onNavigate={navigateGuide} />
     </main>

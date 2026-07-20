@@ -2,6 +2,8 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { checkout2pmCandidates } from "../lib/agents/candidates/checkout-2pm";
 import { candidatesForFiles } from "../lib/agents/candidates";
 import { pythonInvoiceQueueCandidates } from "../lib/agents/candidates/python-invoice-queue";
+import { pythonInventoryReservationCandidates } from "../lib/agents/candidates/python-inventory-reservation";
+import { typescriptWebhookReplayCandidates } from "../lib/agents/candidates/typescript-webhook-replay";
 import { requestAgentText } from "../lib/agents/openai";
 import { mayaMessages } from "../lib/agents/personas/maya";
 import { jonMessages } from "../lib/agents/personas/jon";
@@ -91,6 +93,26 @@ describe("authored Python candidates", () => {
       expect(candidate.targetFile).toBe("src/invoice_queue.py");
       expect(candidate.patch).toContain("class InvoiceQueue");
       expect(candidate.teaching.split(".").filter(Boolean).length).toBeGreaterThanOrEqual(2);
+    }
+  });
+});
+
+describe("additional verified-lab candidates", () => {
+  test("selects complete authored repairs for inventory reservations", () => {
+    expect(candidatesForFiles(["src/reservation_book.py"])).toEqual(pythonInventoryReservationCandidates);
+    expect(pythonInventoryReservationCandidates).toHaveLength(3);
+    for (const candidate of pythonInventoryReservationCandidates) {
+      expect(candidate.targetFile).toBe("src/reservation_book.py");
+      expect(candidate.patch).toContain("class ReservationBook");
+    }
+  });
+
+  test("selects complete authored repairs for webhook replays", () => {
+    expect(candidatesForFiles(["src/event_ledger.ts"])).toEqual(typescriptWebhookReplayCandidates);
+    expect(typescriptWebhookReplayCandidates).toHaveLength(3);
+    for (const candidate of typescriptWebhookReplayCandidates) {
+      expect(candidate.targetFile).toBe("src/event_ledger.ts");
+      expect(candidate.patch).toContain("export class EventLedger");
     }
   });
 });

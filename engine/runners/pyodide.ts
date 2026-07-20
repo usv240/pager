@@ -31,11 +31,19 @@ function loadRuntime(): Promise<PyodideRuntime> {
 }
 
 function resultFromOutput(output: string, passed: boolean): TestResult {
-  const tests = output.split("\n").filter((line) => /\b(ok|FAIL|ERROR)\b/.test(line));
+  const failureDetails = output.split(/\n={5,}\n(?:FAIL|ERROR): /).slice(1).map((block) => {
+    const assertion = block.split("\n").find((line) => line.includes("AssertionError:"));
+    return assertion?.replace(/^.*AssertionError:\s*/, "").trim() || "The assertion failed. Inspect the expected and received values in this test.";
+  });
+  let failureIndex = 0;
+  const tests = output.split("\n").filter((line) => /\.\.\. (ok|FAIL|ERROR)$/.test(line.trim()));
   return {
     passed,
     summary: passed ? "The Python incident test suite passed. The alert is clear." : "The Python incident test suite found a remaining failure.",
-    tests: tests.map((line, index) => ({ name: line.trim() || `Test ${index + 1}`, passed: /\bok\b/.test(line), detail: /\bok\b/.test(line) ? "Passed" : "Failed" })),
+    tests: tests.map((line, index) => {
+      const testPassed = /\.\.\. ok$/.test(line.trim());
+      return { name: line.trim() || `Test ${index + 1}`, passed: testPassed, detail: testPassed ? "Passed" : failureDetails[failureIndex++] ?? "Failed" };
+    }),
   };
 }
 

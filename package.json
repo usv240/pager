@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test:agents": "vitest run tests/agents.test.ts",
     "verify:candidates": "tsx scripts/verify-candidates.ts",
-    "verify:python-candidates": "tsx scripts/verify-python-candidates.ts"
+    "verify:python-candidates": "tsx scripts/verify-python-candidates.ts",
+    "verify:expanded-candidates": "tsx scripts/verify-expanded-candidates.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

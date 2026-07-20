@@ -29,11 +29,21 @@ function fileTree(files: Incident["files"]) {
 
 function resultFromOutput(output: string, passed: boolean): TestResult {
   const cleanOutput = output.replace(/\u001B\[[0-?]*[ -/]*[@-~]/g, "");
-  const testLines = cleanOutput.split("\n").filter((line) => line.includes("\u2713") || line.includes("\u00d7"));
+  const lines = cleanOutput.split("\n");
+  const testLineIndexes = lines.reduce<number[]>((indexes, line, index) => {
+    if (line.includes("\u2713") || line.includes("\u00d7")) indexes.push(index);
+    return indexes;
+  }, []);
   return {
     passed,
     summary: passed ? "The incident test suite passed. The alert is clear." : "The incident test suite found a remaining failure.",
-    tests: testLines.map((line, index) => ({ name: line.replace(/[\u2713\u00d7]/g, "").trim() || `Test ${index + 1}`, passed: !line.includes("\u00d7"), detail: line.includes("\u00d7") ? "Failed" : "Passed" })),
+    tests: testLineIndexes.map((lineIndex, index) => {
+      const line = lines[lineIndex] ?? "";
+      const testPassed = !line.includes("\u00d7");
+      const nextTestLineIndex = testLineIndexes[index + 1] ?? lines.length;
+      const failureReason = lines.slice(lineIndex + 1, nextTestLineIndex).find((candidate) => candidate.trim().startsWith("\u2192"))?.trim().replace(/^\u2192\s*/, "");
+      return { name: line.replace(/[\u2713\u00d7]/g, "").trim() || `Test ${index + 1}`, passed: testPassed, detail: testPassed ? "Passed" : failureReason || "The assertion failed. Inspect the expected and received values in this test." };
+    }),
   };
 }
 
