@@ -1,6 +1,15 @@
 import { WebContainer } from "@webcontainer/api";
 import type { Incident, TestResult } from "@/lib/types";
 
+const progressEvent = "pager:webcontainer-progress";
+
+type WebContainerSession = {
+  files: Map<string, string>;
+  dependenciesInstalled: boolean;
+};
+
+const sessions = new WeakMap<WebContainer, WebContainerSession>();
+
 function fileTree(files: Incident["files"]) {
   const tree: Record<string, unknown> = {};
   for (const file of files) {
@@ -28,6 +37,25 @@ function resultFromOutput(output: string, passed: boolean): TestResult {
   };
 }
 
+function setupFailureResult(output: string): TestResult {
+  const cleanOutput = output.replace(/\u001B\[[0-?]*[ -/]*[@-~]/g, "").trim();
+  return {
+    passed: false,
+    summary: "Environment setup failed. Service dependencies could not be installed.",
+    tests: [{
+      name: "Environment setup",
+      passed: false,
+      detail: cleanOutput || "The install command exited with a nonzero status.",
+    }],
+  };
+}
+
+function emitProgress(message: string): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent<string>(progressEvent, { detail: message }));
+  }
+}
+
 async function execute(webcontainer: WebContainer, command: string[]): Promise<{ exitCode: number; output: string }> {
   const process = await webcontainer.spawn(command[0], command.slice(1));
   let output = "";
@@ -37,11 +65,43 @@ async function execute(webcontainer: WebContainer, command: string[]): Promise<{
   return { exitCode, output };
 }
 
+async function startSession(incident: Incident, runtime: WebContainer | null): Promise<{ webcontainer: WebContainer; session: WebContainerSession }> {
+  if (!runtime) {
+    emitProgress("Booting incident sandbox…");
+    const webcontainer = await WebContainer.boot();
+    await webcontainer.mount(fileTree(incident.files) as Parameters<typeof webcontainer.mount>[0]);
+    const session = { files: new Map(incident.files.map((file) => [file.path, file.content])), dependenciesInstalled: false };
+    sessions.set(webcontainer, session);
+    return { webcontainer, session };
+  }
+
+  const existingSession = sessions.get(runtime);
+  if (existingSession) return { webcontainer: runtime, session: existingSession };
+
+  await runtime.mount(fileTree(incident.files) as Parameters<typeof runtime.mount>[0]);
+  const session = { files: new Map(incident.files.map((file) => [file.path, file.content])), dependenciesInstalled: false };
+  sessions.set(runtime, session);
+  return { webcontainer: runtime, session };
+}
+
+async function writeChangedFiles(webcontainer: WebContainer, session: WebContainerSession, files: Incident["files"]): Promise<void> {
+  const changedFiles = files.filter((file) => session.files.get(file.path) !== file.content);
+  await Promise.all(changedFiles.map(async (file) => {
+    await webcontainer.fs.writeFile(file.path, file.content);
+    session.files.set(file.path, file.content);
+  }));
+}
+
 export async function runWebContainerNode(incident: Incident, runtime: WebContainer | null): Promise<{ result: TestResult; runtime: WebContainer }> {
-  const webcontainer = runtime ?? await WebContainer.boot();
-  if (!runtime) await webcontainer.mount(fileTree(incident.files) as Parameters<typeof webcontainer.mount>[0]);
-  await Promise.all(incident.files.map((file) => webcontainer.fs.writeFile(file.path, file.content)));
-  if (incident.execution.installCommand) await execute(webcontainer, incident.execution.installCommand);
+  const { webcontainer, session } = await startSession(incident, runtime);
+  await writeChangedFiles(webcontainer, session, incident.files);
+  if (incident.execution.installCommand && !session.dependenciesInstalled) {
+    emitProgress("Installing service dependencies (first run only)…");
+    const install = await execute(webcontainer, incident.execution.installCommand);
+    if (install.exitCode !== 0) return { result: setupFailureResult(install.output), runtime: webcontainer };
+    session.dependenciesInstalled = true;
+  }
+  emitProgress("Running the real acceptance suite…");
   const test = await execute(webcontainer, incident.execution.testCommand);
   return { result: resultFromOutput(test.output, test.exitCode === 0), runtime: webcontainer };
 }

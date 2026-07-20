@@ -45,6 +45,7 @@ export function IncidentWorkbench() {
   const [executionError, setExecutionError] = useState("");
   const [completionMessage, setCompletionMessage] = useState("");
   const [running, setRunning] = useState(false);
+  const [verificationProgress, setVerificationProgress] = useState("");
   const [leftTab, setLeftTab] = useState<LeftTab>("brief");
   const [rightTab, setRightTab] = useState<RightTab>("channel");
   const [agentQuestion, setAgentQuestion] = useState("");
@@ -96,6 +97,12 @@ export function IncidentWorkbench() {
   useEffect(() => {
     window.localStorage.setItem("pager-workspace-verification-height", String(verificationHeight));
   }, [verificationHeight]);
+
+  useEffect(() => {
+    const updateProgress = (event: Event) => setVerificationProgress((event as CustomEvent<string>).detail);
+    window.addEventListener("pager:webcontainer-progress", updateProgress);
+    return () => window.removeEventListener("pager:webcontainer-progress", updateProgress);
+  }, []);
 
   useEffect(() => {
     const query = selectedIncidentId ? `?incident=${encodeURIComponent(selectedIncidentId)}` : "";
@@ -211,6 +218,7 @@ export function IncidentWorkbench() {
     if (!activeIncident || running) return;
     setExecutionError("");
     setCompletionMessage("");
+    setVerificationProgress("");
     setRunning(true);
     setLeftTab("evidence");
     setVerificationOpen(true);
@@ -232,6 +240,7 @@ export function IncidentWorkbench() {
       setExecutionError(error instanceof Error ? error.message : "The verification runner could not start.");
     } finally {
       setRunning(false);
+      setVerificationProgress("");
     }
   };
   const askAgent = async () => {
@@ -420,7 +429,7 @@ export function IncidentWorkbench() {
           <label className="workspace-file-picker"><span>Open file <InfoTip label="About source files" className="workspace-inline-tip">Choose a file to inspect or edit. Changes stay in this incident workspace until you run verification.</InfoTip></span><select value={activeFile} onChange={(event) => openFile(event.target.value)}>{files.map((file) => <option key={file.path} value={file.path}>{file.path}</option>)}</select></label>
           <div className="workspace-editor-surface"><CodeEditor language={incident.execution.language} path={activeFile} value={source} onChange={(content) => updateSource(activeFile, content)} /></div>
           <section id="guide-verify" className="workspace-runner" aria-label="Verification controls" tabIndex={-1}>
-            <div><span className="workspace-eyebrow">VERIFICATION <InfoTip label="About verification" className="workspace-inline-tip">Runs the language-specific acceptance suite. Its reported pass or fail result is the only completion authority.</InfoTip></span><p>{running ? "Running the actual acceptance suite…" : result ? result.summary : "Changes are local to this incident. The suite decides what ships."}</p></div>
+            <div><span className="workspace-eyebrow">VERIFICATION <InfoTip label="About verification" className="workspace-inline-tip">Runs the language-specific acceptance suite. Its reported pass or fail result is the only completion authority.</InfoTip></span><p>{running ? verificationProgress || "Running the real acceptance suite…" : result ? result.summary : "Changes are local to this incident. The suite decides what ships."}</p></div>
             <div className="workspace-run-actions">{result && <button className="workspace-results-toggle" onClick={() => setVerificationOpen((current) => !current)} aria-expanded={verificationOpen} aria-controls="verification-drawer">{verificationOpen ? "Hide results" : "View results"}</button>}<button className="workspace-run-button" onClick={() => void verify()} disabled={running}>{running ? "Running tests…" : "Run verification"}</button></div>
           </section>
           {verificationOpen && <><div className="workspace-verification-resizer" role="separator" aria-label="Resize verification panel" aria-orientation="horizontal" aria-controls="verification-drawer" aria-valuemin={verificationHeightLimits.min} aria-valuemax={verificationHeightLimits.max} aria-valuenow={verificationHeight} tabIndex={0} onPointerDown={beginVerificationResize} onKeyDown={resizeVerificationWithKeyboard}><span>Drag to resize</span></div><section id="verification-drawer" className="workspace-verification-drawer" aria-label="Verification results" style={{ "--verification-height": `${verificationHeight}px` } as CSSProperties}><div className="workspace-verification-heading"><span>TEST RESULTS</span>{result && <strong className={result.passed ? "pass" : "fail"}>{result.passed ? "PASSING" : "FAILING"}</strong>}</div>{!result && <p>No verification has run yet. Change code or review a repair option, then run the real acceptance suite.</p>}{result && <div className="workspace-verification-list">{result.tests.map((test) => <article key={test.name}><strong className={test.passed ? "pass" : "fail"}>{test.passed ? "PASS" : "FAIL"}</strong><div><span>{test.name}</span><small>{test.detail}</small></div></article>)}</div>}{executionError && <p className="workspace-error" role="alert">{executionError}</p>}</section></>}
