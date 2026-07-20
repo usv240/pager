@@ -17,5 +17,6 @@ export function IncidentClock({ timeLimitSeconds }: { timeLimitSeconds: number }
     return () => window.clearInterval(timer);
   }, [timeLimitSeconds]);
 
-  return <span className="timer">{remaining === 0 ? "TIME EXPIRED" : `${formatRemaining(remaining)} remaining`}</span>;
+  const state = remaining === 0 ? "expired" : remaining < 5 * 60 ? "warning" : "normal";
+  return <span className={`timer timer-${state}`}>{remaining === 0 ? "TIME EXPIRED" : `${formatRemaining(remaining)} remaining`}</span>;
 }

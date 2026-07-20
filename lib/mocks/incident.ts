@@ -9,10 +9,10 @@ export const mockIncident: Incident = {
   timeLimitSeconds: 1200,
   availability: "complete",
   briefing: {
-    objective: "Contain duplicate checkout charges by tracing concurrent request behavior.",
-    successCriterion: "The checkout suite verifies one charge for concurrent callers.",
-    rootCause: "Multiple requests can create charges before the order is claimed.",
-    evidence: "The concurrency assertion compares caller outcomes with the payment ledger.",
+    objective: "Support is fielding duplicate-charge reports and checkout is returning 502s that point at the payment provider. Find the real cause, judge the AI pair's proposals, and ship only what the verification suite proves.",
+    successCriterion: "The checkout suite must show both attempts completing with one Clearwater charge.",
+    rootCause: "The checkout flow permits more than one payment before the order status is finalized.",
+    evidence: "The acceptance assertion compares both checkout outcomes with the payment ledger.",
   },
   telemetry: {
     impact: "Duplicate payment attempts are under investigation.",
