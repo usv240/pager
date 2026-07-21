@@ -1,4 +1,4 @@
-# Pager
+﻿# Pager
 
 > **Practice the judgment that comes after AI writes the code.**
 
@@ -10,9 +10,9 @@ Pager does **not** grade a learner from an AI opinion. The browser sandbox runs 
 
 AI makes it faster to produce a patch. It does not automatically make the patch safe. A repair can sound reasonable, remove an error message, or satisfy one visible symptom while still breaking the invariant that matters in production.
 
-**Why now:** models just got good enough to produce confident, plausible, *wrong* patches at scale. That flips the scarce skill from writing code to verifying it — and there is no safe place to practice that verification judgment before it is learned from a bad 2 AM deploy. Pager is that place.
+**Why now:** models just got good enough to produce confident, plausible, *wrong* patches at scale. That flips the scarce skill from writing code to verifying it â€” and there is no safe place to practice that verification judgment before it is learned from a bad 2 AM deploy. Pager is that place.
 
-**Who it is for:** developers preparing for on-call and interviews today, and — next — engineering teams onboarding people to ship AI-written code responsibly, and instructors who need execution-graded practice instead of quiz answers.
+**Who it is for:** developers preparing for on-call and interviews today, and â€” next â€” engineering teams onboarding people to ship AI-written code responsibly, and instructors who need execution-graded practice instead of quiz answers.
 
 Pager trains the missing loop:
 
@@ -26,30 +26,30 @@ It complements AI coding assistants by teaching verification discipline in a rea
 
 ## Where Pager fits (and what it is not)
 
-Four adjacent categories touch this space. None occupy Pager's spot: an incident, a *fallible AI collaborator you must judge*, a learner-owned decision, and an executable proof — together.
+Four adjacent categories touch this space. None occupy Pager's spot: an incident, a *fallible AI collaborator you must judge*, a learner-owned decision, and an executable proof â€” together.
 
 | Category | Representative tools | What they do | The gap Pager fills |
 | --- | --- | --- | --- |
-| Incident simulation | Uptime Labs, game-day / fire-drill tooling | Drop engineers into a broken clone with real logs and terminals; human-facilitated | Enterprise, scheduled, facilitator-led, about response *coordination* — not judging an AI's proposed fix. Pager is self-serve, free, browser-only, and about the AI-repair decision. |
+| Incident simulation | Uptime Labs, game-day / fire-drill tooling | Drop engineers into a broken clone with real logs and terminals; human-facilitated | Enterprise, scheduled, facilitator-led, about response *coordination* â€” not judging an AI's proposed fix. Pager is self-serve, free, browser-only, and about the AI-repair decision. |
 | Interactive coding practice | CodeCrafters, Killercoda, GitHub Skills | Build-from-scratch and DevOps labs in-browser with execution | No incident framing and no fallible AI collaborator to judge. They test whether you can build; Pager tests whether you can catch a wrong fix. |
-| AI code-review tooling | Qodo, CodeRabbit, Greptile | Perform the review for you at PR time | They automate the reviewing; Pager trains the human to review — the skill that still matters when the tool is wrong. |
-| Agent benchmarks | SWE-bench Verified | Measure whether an AI *can write* the patch | Pager measures whether a human *can tell when it cannot* — the inverse, and the currently ungraded half. |
+| AI code-review tooling | Qodo, CodeRabbit, Greptile | Perform the review for you at PR time | They automate the reviewing; Pager trains the human to review â€” the skill that still matters when the tool is wrong. |
+| Agent benchmarks | SWE-bench Verified | Measure whether an AI *can write* the patch | Pager measures whether a human *can tell when it cannot* â€” the inverse, and the currently ungraded half. |
 
 **Positioning in one line:** *SWE-bench measures whether AI can write the fix. Pager measures whether you can catch it when it can't.*
 
-This matters now because the industry has begun treating AI code review as a distinct discipline rather than a feature ([Qodo Academy](https://www.qodo.ai/academy/ai-code-review/), [Mend.io](https://www.mend.io/blog/ai-code-review-technologies-challenges-best-practices/)), and because studies show agent patches routinely pass a visible symptom while breaking a hidden invariant ([UTBoost](https://arxiv.org/pdf/2506.09289), [process-oriented error analysis of SWE agents](https://arxiv.org/pdf/2503.12374)) — the exact failure mode each Pager lab is built around. Teams that rehearse incidents resolve them measurably faster ([Uptime Labs](https://www.uptimelabs.io/learn/the-best-incident-response-training-providers)).
+This matters now because the industry has begun treating AI code review as a distinct discipline rather than a feature ([Qodo Academy](https://www.qodo.ai/academy/ai-code-review/), [Mend.io](https://www.mend.io/blog/ai-code-review-technologies-challenges-best-practices/)), and because studies show agent patches routinely pass a visible symptom while breaking a hidden invariant ([UTBoost](https://arxiv.org/pdf/2506.09289), [process-oriented error analysis of SWE agents](https://arxiv.org/pdf/2503.12374)) â€” the exact failure mode each Pager lab is built around. Teams that rehearse incidents resolve them measurably faster ([Uptime Labs](https://www.uptimelabs.io/learn/the-best-incident-response-training-providers)).
 
 ## How Codex and GPT-5.6 were used
 
-Pager was built during OpenAI Build Week with **Codex** and **GPT-5.6**, and both are load-bearing — not decoration.
+Pager was built during OpenAI Build Week with **Codex** and **GPT-5.6**, and both are load-bearing â€” not decoration.
 
 **GPT-5.6 authored the substance of every lab.**
-- `gpt-5.6-sol` generated the incident specifications and the *broken target codebases* — each service, its planted invariant violation, and its acceptance suite. These are committed as fixed artifacts loaded at runtime, so grading stays deterministic instead of depending on a live model call.
-- `gpt-5.6-terra` (low reasoning effort) is the runtime model behind `proposeFix` and `stakeholderReply` — it renders the fallible AI repair proposals and the stakeholder pressure a learner reasons against. `MOCK_MODE=1` falls back to the committed safe artifacts so the product runs with no key.
+- `gpt-5.6-sol` generated the incident specifications and the *broken target codebases* â€” each service, its planted invariant violation, and its acceptance suite. These are committed as fixed artifacts loaded at runtime, so grading stays deterministic instead of depending on a live model call.
+- `gpt-5.6-terra` (low reasoning effort) is the runtime model behind `proposeFix` and `stakeholderReply` â€” it renders the fallible AI repair proposals and the stakeholder pressure a learner reasons against. `MOCK_MODE=1` falls back to the committed safe artifacts so the product runs with no key.
 
-**Codex accelerated the platform around that substance** — the manifest and runner architecture, the Pyodide and WebContainer execution boundaries, candidate verification scripts, the workspace UX, deterministic verification, browser tests, and documentation.
+**Codex accelerated the platform around that substance** â€” the manifest and runner architecture, the Pyodide and WebContainer execution boundaries, candidate verification scripts, the workspace UX, deterministic verification, browser tests, and documentation.
 
-**The humans owned the judgment calls.** Ujwal and Subbu decided that Pager must be an education product, that repair options must be authored and neutral *before* a learner decides, that execution — never a model — remains the grading authority, and that unsupported compiler languages must not be marketed as available.
+**The humans owned the judgment calls.** Ujwal and Subbu decided that Pager must be an education product, that repair options must be authored and neutral *before* a learner decides, that execution â€” never a model â€” remains the grading authority, and that unsupported compiler languages must not be marketed as available.
 
 - The detailed task-by-task build record, decisions, and core-build `/feedback` Session ID (`019f72a4-8de8-7a90-8082-5f6c1a99edd5`) are in [`CODEX-LOG.md`](CODEX-LOG.md).
 - The judge walkthrough is in the **Judge quick start** section below.
@@ -183,7 +183,7 @@ flowchart LR
 
 ### Application structure
 
-For the reasoning behind these choices, read [ADRS.md](ADRS.md).
+For the reasoning behind these choices, read the [Architecture Decision Records](docs/adrs/README.md).
 
 ```text
 app/
