@@ -28,7 +28,11 @@ test.describe("critical learning loop", () => {
     await reviewAndDecide(page, "Guard duplicate pending work", "apply");
 
     await page.getByRole("button", { name: "Run verification" }).click();
-    await expect(page).toHaveURL(/\/credential$/, { timeout: 110_000 });
+    const viewCredential = page.getByRole("button", { name: "View credential" });
+    await expect(viewCredential).toBeVisible({ timeout: 110_000 });
+    await expect(page.getByText("5 acceptance checks", { exact: true })).toBeVisible();
+    await viewCredential.click();
+    await expect(page).toHaveURL(/\/credential$/);
     await expect(page.getByText("Execution-verified credential", { exact: true })).toBeVisible();
     await expect(page.getByText("Incorrect recommendation rejected", { exact: true })).toBeVisible();
   });

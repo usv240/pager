@@ -51,6 +51,7 @@ export function IncidentWorkbench() {
   const [result, setResult] = useState<TestResult>();
   const [executionError, setExecutionError] = useState("");
   const [completionMessage, setCompletionMessage] = useState("");
+  const [credentialReady, setCredentialReady] = useState(false);
   const [running, setRunning] = useState(false);
   const [verificationProgress, setVerificationProgress] = useState("");
   const [leftTab, setLeftTab] = useState<LeftTab>("brief");
@@ -166,6 +167,7 @@ export function IncidentWorkbench() {
         setResult(undefined);
         setExecutionError("");
         setCompletionMessage("");
+        setCredentialReady(false);
         setLeftTab("brief");
         setRightTab("channel");
         setAgentQuestion("");
@@ -288,6 +290,7 @@ export function IncidentWorkbench() {
     setResult(undefined);
     setExecutionError("");
     setCompletionMessage("");
+    setCredentialReady(false);
     saveDraft(starterFiles, incident.activeFile);
   };
   const startProposalReview = (fix: LearnerFix) => {
@@ -311,6 +314,7 @@ export function IncidentWorkbench() {
     setResult(undefined);
     setExecutionError("");
     setCompletionMessage("");
+    setCredentialReady(false);
     setVerificationProgress("");
     setLeftTab("brief");
     setRightTab("channel");
@@ -326,6 +330,7 @@ export function IncidentWorkbench() {
     if (!incidentForVerification || running) return;
     setExecutionError("");
     setCompletionMessage("");
+    setCredentialReady(false);
     setVerificationProgress("");
     setRunning(true);
     setLeftTab("evidence");
@@ -343,7 +348,8 @@ export function IncidentWorkbench() {
       if (execution.result.passed && allOptionsReviewed && caughtIncorrectAiFix && appliedFix) {
         const credential = mintCredential({ incidentId: incidentForVerification.id, startedAt: "", selectedFixIds: Object.keys(decisions), caughtIncorrectAiFix, testResult: execution.result });
         saveCredentialSession({ credential, incidentTitle: incidentForVerification.title, briefing: incidentForVerification.briefing, caughtIncorrectAiFix, testResult: execution.result });
-        router.push("/credential");
+        setCredentialReady(true);
+        setCompletionMessage("Tests passed. Review the execution evidence, then open your credential.");
       } else if (execution.result.passed) {
         setCompletionMessage(`Tests passed. Complete the review trail: ${reviewedCount}/${fixes.length} options judged, including rejection of each unsafe repair.`);
       }
@@ -353,6 +359,9 @@ export function IncidentWorkbench() {
       setRunning(false);
       setVerificationProgress("");
     }
+  };
+  const viewCredential = () => {
+    if (credentialReady) router.push("/credential");
   };
   const askAgent = async () => {
     const question = agentQuestion.trim();
@@ -569,7 +578,7 @@ export function IncidentWorkbench() {
           <div className="workspace-editor-surface"><CodeEditor language={incident.execution.language} path={activeFile} value={source} onChange={(content) => updateSource(activeFile, content)} /></div>
           <section id="guide-verify" className="workspace-runner" aria-label="Verification controls" tabIndex={-1}>
             <div><span className="workspace-eyebrow">VERIFICATION <InfoTip label="About verification" className="workspace-inline-tip">Runs the language-specific acceptance suite. Its reported pass or fail result is the only completion authority.</InfoTip></span><p>{running ? verificationProgress || "Running the real acceptance suite..." : result ? result.summary : "Changes are local to this incident. The suite decides what ships."}</p></div>
-            <div className="workspace-run-actions"><button className="workspace-reset-button" onClick={restoreStarterCode} disabled={running} title="Restore starter code and keep your review trail">Restore code</button><button className="workspace-reset-button" onClick={resetIncident} disabled={running || askingAgent} title="Restore starter code and clear decisions, results, and Coach chat">Reset incident</button>{result && <button className="workspace-results-toggle" onClick={() => setVerificationOpen((current) => !current)} aria-expanded={verificationOpen} aria-controls="verification-drawer">{verificationOpen ? "Hide results" : "View results"}</button>}<button className="workspace-run-button" onClick={() => void verify()} disabled={running}>{running ? "Running tests..." : "Run verification"}</button></div>
+            <div className="workspace-run-actions"><button className="workspace-reset-button" onClick={restoreStarterCode} disabled={running} title="Restore starter code and keep your review trail">Restore code</button><button className="workspace-reset-button" onClick={resetIncident} disabled={running || askingAgent} title="Restore starter code and clear decisions, results, and Coach chat">Reset incident</button>{result && <button className="workspace-results-toggle" onClick={() => setVerificationOpen((current) => !current)} aria-expanded={verificationOpen} aria-controls="verification-drawer">{verificationOpen ? "Hide results" : "View results"}</button>}{credentialReady && <button className="workspace-run-button" onClick={viewCredential}>View credential</button>}<button className="workspace-run-button" onClick={() => void verify()} disabled={running}>{running ? "Running tests..." : "Run verification"}</button></div>
           </section>
           {verificationOpen && <><div className="workspace-verification-resizer" role="separator" aria-label="Resize verification panel" aria-orientation="horizontal" aria-controls="verification-drawer" aria-valuemin={verificationHeightLimits.min} aria-valuemax={verificationHeightLimits.max} aria-valuenow={verificationHeight} tabIndex={0} onPointerDown={beginVerificationResize} onKeyDown={resizeVerificationWithKeyboard}><span>Drag to resize</span></div><section id="verification-drawer" className="workspace-verification-drawer" aria-label="Verification results" style={{ "--verification-height": `${verificationHeight}px` } as CSSProperties}><div className="workspace-verification-heading"><span>TEST RESULTS</span>{result && <span className="workspace-suite-badge">{result.tests.length} acceptance {result.tests.length === 1 ? "check" : "checks"}</span>}{result && <strong className={result.passed ? "pass" : "fail"}>{result.passed ? "PASSING" : "FAILING"}</strong>}</div>{!result && <p>No verification has run yet. Change code or review a repair option, then run the real acceptance suite.</p>}{result && <div className="workspace-verification-list">{result.tests.map((test) => <article key={test.name}><strong className={test.passed ? "pass" : "fail"}>{test.passed ? "PASS" : "FAIL"}</strong><div><span>{test.name}</span><small>{test.detail}</small></div></article>)}</div>}{executionError && <p className="workspace-error" role="alert">{executionError}</p>}</section></>}
           {completionMessage && <p className="workspace-completion" role="status">{completionMessage}</p>}

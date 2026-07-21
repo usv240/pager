@@ -86,15 +86,15 @@ Each lab has its own manifest, service fixture, test suite, alert, operational t
 ### Production-style investigation workspace
 
 - **Mission Control**: the left rail has four focused tabs:
-  - **Brief** explains the incident, operational impact, success condition, and recommended investigation sequence.
+  - **Brief** explains the incident, operational impact, success condition, recommended investigation sequence, and a transferable fault-class tag such as **Idempotency**, **Concurrency**, or **Replay safety**.
   - **Signals** presents service health and a time-ordered operational timeline.
   - **Files** exposes the incident's complete fixture tree and opens source or tests in the editor.
   - **Evidence** summarizes the latest execution result, including per-test failure details.
 - **Code editor**: Monaco renders the actual incident files. Learners can make code changes directly; edits are local to the selected incident draft.
 - **Incident Intelligence**: the right rail separates stakeholder context from repair review:
   - **Incident chat** contains incident-specific messages from product, engineering, SRE, support, finance, and the AI Pair where relevant.
-  - **Repair options** are authored candidate patches with an actual before/after code comparison before a learner makes a decision.
-- **Verification drawer**: a resizable bottom panel runs the incident's real acceptance suite and shows a structured pass/fail record with useful assertion evidence.
+  - **Repair options** identify their AI Pair / GPT-5.6 provenance, remain deliberately fallible, and show an actual before/after code comparison before a learner makes a decision.
+- **Verification drawer**: a resizable bottom panel runs the incident's real acceptance suite, shows the number of acceptance checks and the passed/total count, and reports structured pass/fail evidence with useful assertions.
 - **Live Coach**: an optional AI investigation assistant is available as a panel rather than occupying the workspace permanently.
 
 ### Workspace ergonomics
@@ -108,6 +108,7 @@ Each lab has its own manifest, service fixture, test suite, alert, operational t
 - The tour can be skipped, closed with Escape, or restarted from **Guided practice**. Dismissal is remembered locally so it does not interrupt every reload.
 - Tooltips and information controls explain why panels and actions exist without making the primary screen noisy.
 - Mobile and narrow layouts prioritize the central task and allow rails to be resized or minimized instead of forcing all information into one fixed view.
+- Python runtime startup reports loading progress rather than leaving a silent cold-start pause; failed Python suites return structured evidence without an uncaught browser-console error.
 
 ## The learning loop
 
