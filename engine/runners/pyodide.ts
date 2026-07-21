@@ -2,6 +2,14 @@
 
 const runtimeIndexUrl = "https://cdn.jsdelivr.net/pyodide/v314.0.2/full/";
 
+const progressEvent = "pager:webcontainer-progress";
+
+function emitProgress(message: string): void {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent<string>(progressEvent, { detail: message }));
+  }
+}
+
 export interface PyodideRuntime {
   FS: { writeFile(path: string, content: string): void };
   runPython(code: string): unknown;
@@ -56,11 +64,13 @@ function setupFiles(pyodide: PyodideRuntime, incident: Incident): void {
 }
 
 export async function runPyodide(incident: Incident, runtime: PyodideRuntime | null): Promise<{ result: TestResult; runtime: PyodideRuntime }> {
+  if (!runtime) emitProgress("Loading Python runtime (first run only)…");
   const pyodide = runtime ?? await loadRuntime();
   let output = "";
   pyodide.setStdout({ batched: (line) => { output += `${line}\n`; } });
   pyodide.setStderr({ batched: (line) => { output += `${line}\n`; } });
   setupFiles(pyodide, incident);
+  emitProgress("Running the real acceptance suite…");
   try {
     await pyodide.runPythonAsync(`
 import importlib
