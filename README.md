@@ -30,6 +30,20 @@ Pager was built during OpenAI Build Week with Codex and GPT-5.6. Codex accelerat
 
 This collaboration disclosure, setup guide, runnable fixture data, and the deployed demo are maintained so judges can understand both the product and how Codex/GPT-5.6 contributed to it.
 
+## Judge quick start
+
+**Live demo:** [pager-flax-psi.vercel.app](https://pager-flax-psi.vercel.app)
+
+No account, installation, API key, or payment is required to evaluate the core product.
+
+1. Select **Start incident** and open **The Invoice Queue Retry**.
+2. Read **Brief** and **Signals**, then inspect the source and test file from **Files**.
+3. In **Incident Intelligence**, review each repair diff. Reject the unsafe options and apply **Guard duplicate pending work**.
+4. Run **Verification**. The in-browser Python unittest suite must pass before the credential becomes available.
+5. Switch to **The 2 PM Incident** to inspect the TypeScript/WebContainer concurrency scenario.
+
+The optional Live Coach needs `OPENAI_API_KEY`; all repair-review and verification flows remain fully runnable without it.
+
 ## What is shipped
 
 ### Five execution-verified incident labs
@@ -338,8 +352,8 @@ Do not add a language tab until its fixture can run in an isolated, browser-comp
 
 ## Demo and hackathon materials
 
-- [`DEMO-SCRIPT.md`](DEMO-SCRIPT.md): judge-ready product demo flow.
 - [`DEVPOST-HANDOFF.md`](DEVPOST-HANDOFF.md): submission and handoff material.
+- The recording script is intentionally local-only; the public demo video is the judge-facing walkthrough.
 - [`PRODUCT-PLAN.md`](PRODUCT-PLAN.md): product scope and planned direction.
 - [`TEAM.md`](TEAM.md): team context.
 - [`CODEX-LOG.md`](CODEX-LOG.md): AI-assisted development log.
