@@ -72,7 +72,7 @@ export async function runPyodide(incident: Incident, runtime: PyodideRuntime | n
   setupFiles(pyodide, incident);
   emitProgress("Running the real acceptance suite…");
   try {
-    await pyodide.runPythonAsync(`
+    const passed = await pyodide.runPythonAsync(`
 import importlib
 import os
 import sys
@@ -87,11 +87,10 @@ for module_name, module in list(sys.modules.items()):
         del sys.modules[module_name]
 loader = unittest.defaultTestLoader
 suite = loader.discover(${JSON.stringify(incident.execution.testCommand.at(-1) ?? "tests")})
-result = unittest.TextTestRunner(verbosity=2).run(suite)
-if not result.wasSuccessful():
-    raise SystemExit(1)
+run_result = unittest.TextTestRunner(verbosity=2).run(suite)
+run_result.wasSuccessful()
 `);
-    return { result: resultFromOutput(output, true), runtime: pyodide };
+    return { result: resultFromOutput(output, Boolean(passed)), runtime: pyodide };
   } catch {
     return { result: resultFromOutput(output, false), runtime: pyodide };
   }
