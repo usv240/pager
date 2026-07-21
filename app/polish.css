@@ -131,7 +131,7 @@
   z-index: 60;
   border-color: color-mix(in srgb, var(--blue) 62%, var(--line));
   background: var(--panel);
-  color: var(--ink);
+  color: var(--blue);
   box-shadow: 0 16px 38px rgba(0, 0, 0, .32);
 }
 
@@ -445,16 +445,10 @@
   border-radius: 999px;
   background: var(--panel);
   box-shadow: 0 12px 30px rgba(0, 0, 0, .24);
-  color: var(--ink);
+  color: var(--blue);
   cursor: pointer;
   padding: .68rem .78rem;
   font: 800 .7rem Manrope, sans-serif;
-}
-
-.workspace-agent-dock span {
-  border-left: 1px solid var(--line);
-  color: var(--blue);
-  padding-left: .45rem;
 }
 
 .workspace-agent-dock:hover {
@@ -1234,6 +1228,96 @@
 
 .workspace-save-status { color: var(--muted); font: 700 .62rem/1 var(--font-mono); white-space: nowrap; }
 @media (max-width: 880px) { .workspace-save-status { display: none; } }
+
+/* Header controls share one compact rhythm, including the utility icon. */
+.workspace-topbar .workspace-mission-select select,
+.workspace-topbar .workspace-labs a,
+.workspace-topbar .workspace-guide-trigger,
+.workspace-topbar .theme-toggle,
+.workspace-topbar .info-tip > button {
+  height: 36px;
+  min-height: 36px;
+}
+
+.workspace-topbar .workspace-mission-select select {
+  width: min(350px, 25vw);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.workspace-topbar .workspace-labs a,
+.workspace-topbar .workspace-guide-trigger,
+.workspace-topbar .theme-toggle,
+.workspace-topbar .info-tip > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workspace-topbar .workspace-labs a {
+  padding: .25rem .52rem;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.workspace-topbar .workspace-guide-trigger,
+.workspace-topbar .theme-toggle {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.workspace-topbar .info-tip > button {
+  width: 36px;
+  border-radius: 5px;
+}
+
+.workspace-intelligence-restore {
+  gap: .34rem;
+  border-color: var(--blue) !important;
+  background: color-mix(in srgb, var(--blue) 12%, var(--panel)) !important;
+  color: var(--blue) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blue) 22%, transparent);
+  animation: intelligence-restore-attention 1.35s ease-out both;
+}
+
+.workspace-intelligence-restore > span {
+  font-size: .92rem;
+  line-height: 1;
+}
+
+.workspace-intelligence-restore:hover,
+.workspace-intelligence-restore:focus-visible {
+  background: color-mix(in srgb, var(--blue) 19%, var(--panel)) !important;
+}
+
+@keyframes intelligence-restore-attention {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--blue) 45%, transparent); }
+  55% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--blue) 0%, transparent); }
+  100% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--blue) 22%, transparent); }
+}
+
+@media (max-width: 1460px) {
+  .workspace-lab-count,
+  .workspace-save-status {
+    display: none;
+  }
+}
+
+@media (max-width: 1280px) {
+  .workspace-topbar {
+    gap: .5rem;
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .workspace-topbar-actions {
+    gap: .4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-intelligence-restore { animation: none; }
+}
 
 
 .workspace-review-progress { margin: .45rem .85rem .8rem; color: var(--muted); font: 700 .72rem/1.45 var(--font-mono); }

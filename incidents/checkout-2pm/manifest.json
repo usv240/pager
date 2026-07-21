@@ -3,7 +3,7 @@
   "difficulty": "advanced",
   "service": "checkout-service",
   "severity": "SEV-1",
-  "alert": "Checkout 502s are spiking and support has multiple duplicate-charge reports \u00e2\u20ac\u201d customers may be paying twice for one order.",
+  "alert": "Checkout 502s are spiking and support has multiple duplicate-charge reports - customers may be paying twice for one order.",
   "timeLimitSeconds": 1200,
   "availability": "complete",
   "briefing": {
