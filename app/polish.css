@@ -1215,6 +1215,9 @@
 .workspace-mission-meta { display: flex; flex-wrap: wrap; gap: .35rem; margin: .8rem 0; }
 .workspace-mission-meta span { border: 1px solid var(--line); border-radius: 999px; padding: .2rem .42rem; color: var(--muted); font: 700 .62rem/1 var(--font-mono); text-transform: uppercase; }
 .workspace-mission-meta span:first-child { border-color: color-mix(in srgb, var(--red) 55%, var(--line)); color: var(--red); }
+.workspace-mission-meta span.fault-class { border-color: color-mix(in srgb, var(--blue) 58%, var(--line)); color: var(--blue); }
+.workspace-repair-source { margin: .1rem 0 .5rem; color: var(--green); font: 700 .6rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: .03em; }
+.workspace-suite-badge { border: 1px solid color-mix(in srgb, var(--blue) 50%, var(--line)); border-radius: 999px; padding: .12rem .4rem; color: var(--blue); font: 700 .6rem/1 var(--font-mono); text-transform: uppercase; }
 .workspace-next-step { margin: .85rem 0; padding: .65rem .7rem; border-left: 2px solid var(--blue); background: color-mix(in srgb, var(--blue) 5%, var(--panel)); }
 .workspace-next-step span { color: var(--blue); font: 800 .62rem/1 var(--font-mono); letter-spacing: .05em; }
 .workspace-next-step p { margin: .35rem 0 0; color: var(--muted); font-size: .78rem; line-height: 1.45; }

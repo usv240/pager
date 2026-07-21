@@ -40,5 +40,5 @@ export async function loadIncident(requestedId?: string): Promise<Incident> {
   const files = await collectFiles(serviceRoot);
   if (!files.some((file) => file.path === manifest.activeFile)) throw new Error("Incident manifest references a missing active file.");
 
-  return { id: incidentDirectory.name, title: manifest.title, difficulty: manifest.difficulty, service: manifest.service, severity: manifest.severity, alert: manifest.alert, timeLimitSeconds: manifest.timeLimitSeconds, availability: manifest.availability, briefing: manifest.briefing, telemetry: manifest.telemetry, stakeholderMessages: manifest.stakeholderMessages, files, activeFile: manifest.activeFile, execution: manifest.execution };
+  return { id: incidentDirectory.name, title: manifest.title, difficulty: manifest.difficulty, service: manifest.service, severity: manifest.severity, alert: manifest.alert, timeLimitSeconds: manifest.timeLimitSeconds, availability: manifest.availability, faultClass: manifest.faultClass, briefing: manifest.briefing, telemetry: manifest.telemetry, stakeholderMessages: manifest.stakeholderMessages, files, activeFile: manifest.activeFile, execution: manifest.execution };
 }

@@ -24,6 +24,21 @@ Pager trains the missing loop:
 
 It complements AI coding assistants by teaching verification discipline in a realistic, interactive environment rather than asking learners to trust a generated answer.
 
+## Where Pager fits (and what it is not)
+
+Four adjacent categories touch this space. None occupy Pager's spot: an incident, a *fallible AI collaborator you must judge*, a learner-owned decision, and an executable proof — together.
+
+| Category | Representative tools | What they do | The gap Pager fills |
+| --- | --- | --- | --- |
+| Incident simulation | Uptime Labs, game-day / fire-drill tooling | Drop engineers into a broken clone with real logs and terminals; human-facilitated | Enterprise, scheduled, facilitator-led, about response *coordination* — not judging an AI's proposed fix. Pager is self-serve, free, browser-only, and about the AI-repair decision. |
+| Interactive coding practice | CodeCrafters, Killercoda, GitHub Skills | Build-from-scratch and DevOps labs in-browser with execution | No incident framing and no fallible AI collaborator to judge. They test whether you can build; Pager tests whether you can catch a wrong fix. |
+| AI code-review tooling | Qodo, CodeRabbit, Greptile | Perform the review for you at PR time | They automate the reviewing; Pager trains the human to review — the skill that still matters when the tool is wrong. |
+| Agent benchmarks | SWE-bench Verified | Measure whether an AI *can write* the patch | Pager measures whether a human *can tell when it cannot* — the inverse, and the currently ungraded half. |
+
+**Positioning in one line:** *SWE-bench measures whether AI can write the fix. Pager measures whether you can catch it when it can't.*
+
+This matters now because the industry has begun treating AI code review as a distinct discipline rather than a feature ([Qodo Academy](https://www.qodo.ai/academy/ai-code-review/), [Mend.io](https://www.mend.io/blog/ai-code-review-technologies-challenges-best-practices/)), and because studies show agent patches routinely pass a visible symptom while breaking a hidden invariant ([UTBoost](https://arxiv.org/pdf/2506.09289), [process-oriented error analysis of SWE agents](https://arxiv.org/pdf/2503.12374)) — the exact failure mode each Pager lab is built around. Teams that rehearse incidents resolve them measurably faster ([Uptime Labs](https://www.uptimelabs.io/learn/the-best-incident-response-training-providers)).
+
 ## How Codex and GPT-5.6 were used
 
 Pager was built during OpenAI Build Week with **Codex** and **GPT-5.6**, and both are load-bearing — not decoration.

@@ -6,6 +6,7 @@
   "alert": "Provider retries are replaying the same fulfillment event.",
   "timeLimitSeconds": 900,
   "availability": "complete",
+  "faultClass": "replay-safety",
   "briefing": {
     "objective": "Prevent a webhook retry from creating duplicate fulfillment work while continuing to accept new event IDs.",
     "successCriterion": "The Vitest acceptance suite must show exactly one processed event for each event ID after replay.",

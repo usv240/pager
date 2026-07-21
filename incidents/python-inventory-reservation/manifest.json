@@ -6,6 +6,7 @@
   "alert": "Repeated reservation requests are exhausting available stock.",
   "timeLimitSeconds": 900,
   "availability": "complete",
+  "faultClass": "idempotency",
   "briefing": {
     "objective": "Contain duplicate inventory reservations without changing the availability contract for distinct orders.",
     "successCriterion": "The Python unittest suite must show that a retried order owns one reservation while distinct orders remain independently reserved.",

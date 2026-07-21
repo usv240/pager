@@ -6,6 +6,7 @@
   "alert": "Checkout 502s are spiking and support has multiple duplicate-charge reports - customers may be paying twice for one order.",
   "timeLimitSeconds": 1200,
   "availability": "complete",
+  "faultClass": "concurrency",
   "briefing": {
     "objective": "Support is fielding duplicate-charge reports and checkout is returning 502s that point at the payment provider. Find the real cause, judge the AI pair's proposals, and ship only what the verification suite proves.",
     "successCriterion": "The acceptance suite must show both checkout attempts completing with exactly one Clearwater charge.",

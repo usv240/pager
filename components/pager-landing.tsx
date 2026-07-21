@@ -38,7 +38,7 @@ export function PagerLanding() {
     </section>
 
     <section id="proof" className="proof-panel" aria-labelledby="proof-title">
-      <div><p className="eyebrow">Why Pager</p><h2 id="proof-title">AI can accelerate the fix. You still own the decision.</h2><p>Pager is not a generic coding drill or an incident-management dashboard. It trains the missing layer between an AI-generated patch and a safe production decision: verification discipline under realistic constraints.</p></div>
+      <div><p className="eyebrow">Why Pager</p><h2 id="proof-title">AI can accelerate the fix. You still own the decision.</h2><p>Pager is not a generic coding drill or an incident-management dashboard. It trains the missing layer between an AI-generated patch and a safe production decision: verification discipline under realistic constraints.</p><p><strong>SWE-bench measures whether AI can write the fix. Pager measures whether you can catch it when it can&apos;t.</strong></p></div>
       <ul><li><strong>Real systems, not isolated puzzles</strong><span>Every lab includes services, a timeline, stakeholders, a codebase, and acceptance evidence that point to one customer-facing invariant.</span></li><li><strong>Judgment before feedback</strong><span>Repairs stay plausible until the learner inspects the actual diff and records an Apply or Reject decision.</span></li><li><strong>Execution, not AI scoring</strong><span>The in-browser suite is the authority. A credential requires a real passing run and demonstrated AI oversight.</span></li></ul>
     </section>
 

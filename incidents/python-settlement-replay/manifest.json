@@ -6,6 +6,7 @@
   "alert": "A replayed settlement event can create duplicate external deliveries.",
   "timeLimitSeconds": 1200,
   "availability": "complete",
+  "faultClass": "replay-safety",
   "briefing": {
     "objective": "Prevent a re-entrant settlement replay from delivering the same event twice without blocking independent events.",
     "successCriterion": "The Python unittest suite must show exactly one external delivery for a re-entrant replay while different settlement events still deliver.",

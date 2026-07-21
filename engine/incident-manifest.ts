@@ -1,4 +1,4 @@
-import type { IncidentAvailability, IncidentDifficulty, IncidentBriefing, IncidentExecution, IncidentLanguage, IncidentRunner, IncidentTelemetry, StakeholderMessage } from "@/lib/types";
+import type { IncidentAvailability, IncidentDifficulty, IncidentBriefing, IncidentExecution, IncidentFaultClass, IncidentLanguage, IncidentRunner, IncidentTelemetry, StakeholderMessage } from "@/lib/types";
 
 export interface IncidentManifest {
   title: string;
@@ -8,6 +8,7 @@ export interface IncidentManifest {
   alert: string;
   timeLimitSeconds: number;
   availability: IncidentAvailability;
+  faultClass?: IncidentFaultClass;
   briefing: IncidentBriefing;
   telemetry: IncidentTelemetry;
   stakeholderMessages: StakeholderMessage[];
@@ -20,6 +21,7 @@ const languages = new Set<IncidentLanguage>(["typescript", "javascript", "python
 const runners = new Set<IncidentRunner>(["webcontainer-node", "pyodide", "sandbox-java", "sandbox-cpp"]);
 const availability = new Set<IncidentAvailability>(["complete", "experimental"]);
 const difficulties = new Set<IncidentDifficulty>(["easy", "medium", "advanced"]);
+const faultClasses = new Set<IncidentFaultClass>(["idempotency", "concurrency", "ordering", "replay-safety"]);
 
 export function parseManifest(value: unknown): IncidentManifest {
   if (!value || typeof value !== "object") throw new Error("Incident manifest must be an object.");
@@ -30,6 +32,7 @@ export function parseManifest(value: unknown): IncidentManifest {
   if (!Number.isInteger(manifest.timeLimitSeconds) || manifest.timeLimitSeconds < 1) throw new Error("Incident manifest has an invalid time limit.");
   if (!availability.has(manifest.availability)) throw new Error("Incident manifest has an invalid availability.");
   if (!difficulties.has(manifest.difficulty)) throw new Error("Incident manifest has an invalid difficulty.");
+  if (manifest.faultClass && !faultClasses.has(manifest.faultClass)) throw new Error("Incident manifest has an invalid fault class.");
   if (!manifest.briefing.objective || !manifest.briefing.successCriterion || !manifest.briefing.rootCause || !manifest.briefing.evidence) throw new Error("Incident manifest has an invalid briefing.");
   if (!manifest.telemetry.impact || !Array.isArray(manifest.telemetry.services) || manifest.telemetry.services.length === 0 || !Array.isArray(manifest.telemetry.events) || manifest.telemetry.events.length === 0) throw new Error("Incident manifest has invalid telemetry.");
   if (manifest.telemetry.services.some((service) => !service.name || !["degraded", "investigating", "healthy"].includes(service.status)) || manifest.telemetry.events.some((event) => !event.timestamp || !event.source || !event.message)) throw new Error("Incident manifest has invalid telemetry entries.");
