@@ -153,31 +153,37 @@ The Coach is optional support only. It never controls the repair review state, t
 
 ## Architecture
 
-```text
-                        +-------------------------------+
-                        |          Next.js UI            |
-                        | landing + workspace + guide    |
-                        +---------------+---------------+
-                                        |
-     +----------------------------------+----------------------------------+
-     |                                  |                                  |
-     v                                  v                                  v
-+------------+                 +------------------+              +------------------+
-| Manifest / |                 | Browser runners  |              | Server AI routes |
-| fixture     |                 |                  |              |                  |
-| loader      |                 | Python: Pyodide  |              | Coach only       |
-|             |                 | TS/JS:           |              | optional OpenAI  |
-| JSON source |                 | WebContainer     |              | Responses API    |
-+-----+------+                 +--------+---------+              +--------+---------+
-      |                                 |                                 |
-      v                                 v                                 v
-Incident metadata,                Actual test output,             Bounded guidance;
-file tree, chat,                  structured test results,        never grading or
-telemetry, repair                 credential eligibility           runner authority
-candidates
+Pager separates content, execution, and coaching so an AI response can never decide whether a learner passed.
+
+```mermaid
+flowchart LR
+    Learner[Learner] --> UI[Next.js incident workspace]
+    UI --> Manifest[Incident manifest and fixture]
+    UI --> Runner[Browser test runner]
+    UI --> Coach[Optional AI Coach]
+    Manifest --> UI
+    Runner -->|structured test evidence| UI
+    Coach -->|questions and investigation hints| UI
+    UI -->|passing suite plus reviewed decisions| Credential[Execution-verified credential]
+
+    subgraph Browser
+      Runner
+      Py[Python via Pyodide]
+      TS[TypeScript and JavaScript via WebContainer]
+      Runner --- Py
+      Runner --- TS
+    end
+
+    subgraph Server
+      Coach
+    end
 ```
 
+**In plain English:** a lab supplies the incident and code, the learner changes that code, the browser runs its real test suite, and Pager records the result. The optional Coach helps the learner investigate, but it cannot edit code, choose a repair, mark a test as passed, or issue a credential by itself.
+
 ### Application structure
+
+For the reasoning behind these choices, read [ADRS.md](ADRS.md).
 
 ```text
 app/
