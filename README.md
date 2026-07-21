@@ -353,6 +353,7 @@ Do not add a language tab until its fixture can run in an isolated, browser-comp
 ## Demo and hackathon materials
 
 - [`DEVPOST-HANDOFF.md`](DEVPOST-HANDOFF.md): submission and handoff material.
+- [`USER-TEST-PROTOCOL.md`](USER-TEST-PROTOCOL.md): a short, ethical script for collecting real first-time learner feedback.
 - The recording script is intentionally local-only; the public demo video is the judge-facing walkthrough.
 - [`PRODUCT-PLAN.md`](PRODUCT-PLAN.md): product scope and planned direction.
 - [`TEAM.md`](TEAM.md): team context.
