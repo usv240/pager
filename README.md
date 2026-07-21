@@ -10,6 +10,10 @@ Pager does **not** grade a learner from an AI opinion. The browser sandbox runs 
 
 AI makes it faster to produce a patch. It does not automatically make the patch safe. A repair can sound reasonable, remove an error message, or satisfy one visible symptom while still breaking the invariant that matters in production.
 
+**Why now:** models just got good enough to produce confident, plausible, *wrong* patches at scale. That flips the scarce skill from writing code to verifying it — and there is no safe place to practice that verification judgment before it is learned from a bad 2 AM deploy. Pager is that place.
+
+**Who it is for:** developers preparing for on-call and interviews today, and — next — engineering teams onboarding people to ship AI-written code responsibly, and instructors who need execution-graded practice instead of quiz answers.
+
 Pager trains the missing loop:
 
 1. Understand the incident and its operational constraint.
@@ -20,15 +24,21 @@ Pager trains the missing loop:
 
 It complements AI coding assistants by teaching verification discipline in a realistic, interactive environment rather than asking learners to trust a generated answer.
 
-## Build Week collaboration and provenance
+## How Codex and GPT-5.6 were used
 
-Pager was built during OpenAI Build Week with Codex and GPT-5.6. Codex accelerated the implementation of the incident fixtures, manifest and runner architecture, candidate verification scripts, workspace UX, documentation, and validation loop. Ujwal and Subbu made the product decisions: Pager must be an education product, repair options must be authored and neutral before a learner decides, execution must remain the grading authority, and unsupported compiler languages must not be marketed as available.
+Pager was built during OpenAI Build Week with **Codex** and **GPT-5.6**, and both are load-bearing — not decoration.
 
-- The detailed build record, decisions, and core-build `/feedback` Session ID are in [`CODEX-LOG.md`](CODEX-LOG.md).
-- The public demo flow is in [`DEMO-SCRIPT.md`](DEMO-SCRIPT.md).
+**GPT-5.6 authored the substance of every lab.**
+- `gpt-5.6-sol` generated the incident specifications and the *broken target codebases* — each service, its planted invariant violation, and its acceptance suite. These are committed as fixed artifacts loaded at runtime, so grading stays deterministic instead of depending on a live model call.
+- `gpt-5.6-terra` (low reasoning effort) is the runtime model behind `proposeFix` and `stakeholderReply` — it renders the fallible AI repair proposals and the stakeholder pressure a learner reasons against. `MOCK_MODE=1` falls back to the committed safe artifacts so the product runs with no key.
+
+**Codex accelerated the platform around that substance** — the manifest and runner architecture, the Pyodide and WebContainer execution boundaries, candidate verification scripts, the workspace UX, deterministic verification, browser tests, and documentation.
+
+**The humans owned the judgment calls.** Ujwal and Subbu decided that Pager must be an education product, that repair options must be authored and neutral *before* a learner decides, that execution — never a model — remains the grading authority, and that unsupported compiler languages must not be marketed as available.
+
+- The detailed task-by-task build record, decisions, and core-build `/feedback` Session ID (`019f72a4-8de8-7a90-8082-5f6c1a99edd5`) are in [`CODEX-LOG.md`](CODEX-LOG.md).
+- The judge walkthrough is in the **Judge quick start** section below.
 - Submission requirements are tracked against the [OpenAI Build Week official rules](https://openai.devpost.com/rules).
-
-This collaboration disclosure, setup guide, runnable fixture data, and the deployed demo are maintained so judges can understand both the product and how Codex/GPT-5.6 contributed to it.
 
 ## Judge quick start
 
