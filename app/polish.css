@@ -1407,3 +1407,82 @@
   .workspace-rail-content, .workspace-channel, .workspace-pair, .workspace-python-guide { padding: .85rem; }
   .workspace-editor-tabs button { max-width: 72%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+/* Landing narrative: make the product advantage scannable without turning it into a feature wall. */
+.landing-impact {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 46px;
+  grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
+  padding: 88px 0;
+}
+
+.landing-impact .section-heading p:not(.eyebrow) {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.65;
+  margin: 18px 0 0;
+}
+
+.impact-grid {
+  display: grid;
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+}
+
+.impact-grid article {
+  background: var(--panel);
+  min-height: 152px;
+  padding: 22px 24px;
+}
+
+.impact-grid span {
+  color: var(--blue);
+  font: 500 11px var(--font-mono);
+}
+
+.impact-grid h3 {
+  font-size: 18px;
+  letter-spacing: -.025em;
+  margin: 14px 0 7px;
+}
+
+.impact-grid p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.58;
+  margin: 0;
+}
+
+.landing-cta p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: -10px auto 28px;
+  max-width: 38rem;
+}
+
+.landing-roadmap li strong {
+  color: var(--ink);
+}
+
+[data-theme="light"] .impact-grid article {
+  background: #fff;
+}
+
+[data-theme="light"] .impact-grid {
+  border-color: #d7e1ee;
+  box-shadow: 0 12px 28px #27496b0d;
+}
+
+@media (max-width: 760px) {
+  .landing-impact {
+    gap: 30px;
+    grid-template-columns: 1fr;
+    padding: 58px 0;
+  }
+
+  .impact-grid article {
+    min-height: 0;
+  }
+}
