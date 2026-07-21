@@ -538,7 +538,6 @@ export function IncidentWorkbench() {
                 <span>{incident.severity}</span><span>{incident.difficulty}</span><span>{incident.service}</span><span>{Math.ceil(incident.timeLimitSeconds / 60)} min</span>{incident.faultClass && <span className="fault-class" title="The class of bug this incident trains you to catch">{FAULT_CLASS_LABELS[incident.faultClass] ?? incident.faultClass}</span>}
               </div>
               <div className="workspace-criterion"><span>SUCCESS CONDITION</span><p>{incident.briefing.successCriterion}</p></div>
-              <button className="workspace-practice-button" onClick={() => setGuideOpen(true)}>Start guided practice <span aria-hidden="true">&rarr;</span></button>
               <details className="workspace-brief-details">
                 <summary>View investigation plan and starter files</summary>
                 <div className="workspace-next-step"><span>START WITH</span><p>Read the incident chat, inspect the source and matching tests, then judge every repair option. Only one repair can enter the workspace at a time.</p></div>
