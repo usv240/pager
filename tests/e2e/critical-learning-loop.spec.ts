@@ -35,5 +35,16 @@ test.describe("critical learning loop", () => {
     await expect(page).toHaveURL(/\/credential$/);
     await expect(page.getByText("Execution-verified credential", { exact: true })).toBeVisible();
     await expect(page.getByText("Incorrect recommendation rejected", { exact: true })).toBeVisible();
+
+    await page.getByRole("link", { name: "Back to incident" }).click();
+    await expect(page).toHaveURL(/incident=python-invoice-queue/);
+    await expect(page.getByRole("button", { name: "Evidence" })).toHaveClass(/active/);
+    await expect(page.getByText("Suite passed", { exact: true })).toBeVisible();
+    await expect(page.getByText("PASSING", { exact: true })).toBeVisible();
+    await expect(page.getByText("5 acceptance checks", { exact: true })).toBeVisible();
+    await expect(page.locator(".monaco-editor")).toContainText("contains(invoice_id)");
+    await page.reload();
+    await expect(page.getByText("PASSING", { exact: true })).toBeVisible();
+    await expect(page.getByText("5 acceptance checks", { exact: true })).toBeVisible();
   });
 });

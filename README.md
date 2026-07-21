@@ -231,7 +231,7 @@ WebContainers require cross-origin isolation. `next.config.ts` sends `Cross-Orig
 
 Pager is deliberately session-oriented and has no account requirement.
 
-- Code drafts and the active file are saved in browser `localStorage` per incident under a versioned Pager key.
+- Code drafts, the active file, repair decisions, and the latest structured test evidence are saved in browser `localStorage` per incident under a versioned Pager key. Returning from a credential restores the completed incident without rerunning the suite.
 - Rail sizes, panel visibility, and theme preferences are preserved locally.
 - **Restore code** returns only the source files to the incident baseline while preserving decision evidence.
 - **Reset incident** restores the baseline files and clears repair decisions, execution results, credential state, and Coach conversation for that incident.
@@ -358,7 +358,7 @@ A production deployment does not connect to an actual company incident system. P
 - Live Coach accepts same-origin browser requests only when an `Origin` header is supplied, validates and bounds the request body, applies a configurable timeout, and uses an in-memory request limit of 12 requests per 10 minutes per client identifier.
 - Repair evaluation and credentials are deterministic; an LLM cannot mark an unsafe repair correct.
 - Browser runners execute only the selected fixture in their own runtime. They are not a replacement for server-side sandboxing of untrusted arbitrary repositories.
-- Current persistence is local browser state, not authenticated multi-user storage.
+- Current persistence is local browser state, not authenticated multi-user storage. It is validated before use but is not a signed, shareable, or tamper-proof credential.
 - The in-memory Coach rate limit is suitable for the hackathon prototype; a multi-instance deployment should move rate limiting to a shared store and add authentication, audit logging, and abuse monitoring.
 - Run `npm audit --omit=dev` in CI and review its output before releases. Dependency scanning reduces risk; it does not replace patch management and security review.
 

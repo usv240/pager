@@ -9,6 +9,7 @@ import { InfoTip } from "@/components/info-tip";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { WorkspaceGuide, type GuideArea } from "@/components/workspace-guide";
 import { saveCredentialSession } from "@/engine/credential-session";
+import { clearWorkspaceSession, loadWorkspaceSession, saveWorkspaceSession } from "@/engine/workspace-session";
 import { runTests } from "@/engine/run-tests";
 import type { RunnerRuntime } from "@/engine/runners";
 import type { AgentGamePhase, AgentStakeholderRole } from "@/lib/agents";
@@ -76,7 +77,6 @@ export function IncidentWorkbench() {
     .sort((left, right) => difficultyOrder[left.difficulty] - difficultyOrder[right.difficulty] || left.title.localeCompare(right.title)), [catalog]);
   const selectedIncidentId = searchParams.get("incident") ?? "";
   const missionHref = (incidentId: string) => `/?play=1&incident=${encodeURIComponent(incidentId)}`;
-  const draftKey = (incidentId: string) => `pager-incident-draft-v1:${incidentId}`;
 
   useEffect(() => {
     void fetch("/api/incidents")
@@ -142,34 +142,27 @@ export function IncidentWorkbench() {
         setIncident(loadedIncident);
         let initialFiles = loadedIncident.files.map((file) => ({ ...file }));
         let initialActiveFile = loadedIncident.activeFile;
-        try {
-          const savedDraft = window.localStorage.getItem(draftKey(loadedIncident.id));
-          if (savedDraft) {
-            const draft = JSON.parse(savedDraft) as { files?: Incident["files"]; activeFile?: string };
-            const hasMatchingFiles = Array.isArray(draft.files)
-              && draft.files.length === loadedIncident.files.length
-              && draft.files.every((file) => typeof file.path === "string" && typeof file.content === "string" && loadedIncident.files.some((starter) => starter.path === file.path));
-            if (hasMatchingFiles && draft.files) initialFiles = draft.files;
-            if (typeof draft.activeFile === "string" && initialFiles.some((file) => file.path === draft.activeFile)) initialActiveFile = draft.activeFile;
-          }
-        } catch {
-          window.localStorage.removeItem(draftKey(loadedIncident.id));
-        }
+        const savedWorkspace = loadWorkspaceSession(loadedIncident.id);
+        const hasMatchingFiles = savedWorkspace !== null
+          && savedWorkspace.files.length === loadedIncident.files.length
+          && savedWorkspace.files.every((file) => loadedIncident.files.some((starter) => starter.path === file.path));
+        if (hasMatchingFiles && savedWorkspace) initialFiles = savedWorkspace.files;
+        if (savedWorkspace && initialFiles.some((file) => file.path === savedWorkspace.activeFile)) initialActiveFile = savedWorkspace.activeFile;
         filesRef.current = initialFiles;
         setFiles(initialFiles);
         setActiveFile(initialActiveFile);
         setFixes([]);
         setReveals({});
         setStakeholderMessages([]);
-        setDecisions({});
-        setActiveAppliedFixId("");
+        setDecisions(savedWorkspace?.decisions ?? {});
+        setActiveAppliedFixId(savedWorkspace?.activeAppliedFixId ?? "");
         setReviewingFixId("");
-        setResult(undefined);
+        setResult(savedWorkspace?.result);
         setExecutionError("");
-        setCompletionMessage("");
+        setCompletionMessage(savedWorkspace?.completionMessage ?? "");
         setCredentialReady(false);
-        setLeftTab("brief");
-        setRightTab("channel");
+        setLeftTab(savedWorkspace?.result ? "evidence" : "brief");
+        setRightTab(savedWorkspace && Object.keys(savedWorkspace.decisions).length > 0 ? "pair" : "channel");
         setAgentQuestion("");
         setAgentQuestions([]);
         setAgentQuestionError("");
@@ -245,15 +238,18 @@ export function IncidentWorkbench() {
     return () => controller.abort();
   }, [incident, gamePhase, usesDynamicStakeholders]);
 
-  const saveDraft = (nextFiles: Incident["files"], nextActiveFile = activeFile) => {
+  const saveWorkspace = (nextFiles: Incident["files"], nextActiveFile: string, nextDecisions: Record<string, "applied" | "rejected">, nextAppliedFixId: string, nextResult: TestResult | undefined, nextCompletionMessage: string) => {
     if (!incident) return;
-    window.localStorage.setItem(draftKey(incident.id), JSON.stringify({ files: nextFiles, activeFile: nextActiveFile }));
+    saveWorkspaceSession(incident.id, { files: nextFiles, activeFile: nextActiveFile, decisions: nextDecisions, activeAppliedFixId: nextAppliedFixId, result: nextResult, completionMessage: nextCompletionMessage });
   };
   const updateSource = (path: string, content: string) => {
     const nextFiles = filesRef.current.map((file) => file.path === path ? { ...file, content } : file);
     filesRef.current = nextFiles;
     setFiles(nextFiles);
-    saveDraft(nextFiles);
+    setResult(undefined);
+    setCompletionMessage("");
+    setCredentialReady(false);
+    saveWorkspace(nextFiles, activeFile, decisions, activeAppliedFixId, undefined, "");
   };
   const requestReveal = async (fix: LearnerFix, decision: "applied" | "rejected"): Promise<CandidateReveal | undefined> => {
     try {
@@ -272,11 +268,17 @@ export function IncidentWorkbench() {
   };
   const recordDecision = (fix: LearnerFix, decision: "applied" | "rejected") => {
     if (decision === "applied" && activeAppliedFixId && activeAppliedFixId !== fix.id) return;
-    setDecisions((current) => ({ ...current, [fix.id]: decision }));
+    const nextDecisions = { ...decisions, [fix.id]: decision };
+    const nextAppliedFixId = decision === "applied" ? fix.id : activeAppliedFixId;
+    setDecisions(nextDecisions);
     if (decision === "applied") {
       updateSource(fix.targetFile ?? activeFile, fix.patch);
       setActiveAppliedFixId(fix.id);
     }
+    setResult(undefined);
+    setCompletionMessage("");
+    setCredentialReady(false);
+    saveWorkspace(filesRef.current, activeFile, nextDecisions, nextAppliedFixId, undefined, "");
     void requestReveal(fix, decision);
     setReviewingFixId("");
   };
@@ -291,7 +293,7 @@ export function IncidentWorkbench() {
     setExecutionError("");
     setCompletionMessage("");
     setCredentialReady(false);
-    saveDraft(starterFiles, incident.activeFile);
+    saveWorkspace(starterFiles, incident.activeFile, decisions, "", undefined, "");
   };
   const startProposalReview = (fix: LearnerFix) => {
     setActiveFile(fix.targetFile ?? activeFile);
@@ -305,7 +307,7 @@ export function IncidentWorkbench() {
     filesRef.current = resetFiles;
     setFiles(resetFiles);
     setActiveFile(incident.activeFile);
-    window.localStorage.removeItem(draftKey(incident.id));
+    clearWorkspaceSession(incident.id);
     setReveals({});
     setStakeholderMessages([]);
     setDecisions({});
@@ -345,14 +347,19 @@ export function IncidentWorkbench() {
       const rejectedIncorrectCount = rejectedReveals.filter((reveal) => reveal !== undefined && reveal.faultTag !== "verified").length;
       const caughtIncorrectAiFix = rejectedIncorrectCount >= Math.max(1, fixes.length - 1);
       const appliedFix = fixes.find((fix) => decisions[fix.id] === "applied");
+      let nextCompletionMessage = "";
       if (execution.result.passed && allOptionsReviewed && caughtIncorrectAiFix && appliedFix) {
         const credential = mintCredential({ incidentId: incidentForVerification.id, startedAt: "", selectedFixIds: Object.keys(decisions), caughtIncorrectAiFix, testResult: execution.result });
-        saveCredentialSession({ credential, incidentTitle: incidentForVerification.title, briefing: incidentForVerification.briefing, caughtIncorrectAiFix, testResult: execution.result });
-        setCredentialReady(true);
-        setCompletionMessage("Tests passed. Review the execution evidence, then open your credential.");
+        const credentialSaved = saveCredentialSession({ credential, incidentId: incidentForVerification.id, incidentTitle: incidentForVerification.title, briefing: incidentForVerification.briefing, caughtIncorrectAiFix, testResult: execution.result });
+        setCredentialReady(credentialSaved);
+        nextCompletionMessage = credentialSaved
+          ? "Tests passed. Review the execution evidence, then open your credential."
+          : "Tests passed. Browser storage is unavailable, so this credential cannot be opened after this session.";
       } else if (execution.result.passed) {
-        setCompletionMessage(`Tests passed. Complete the review trail: ${reviewedCount}/${fixes.length} options judged, including rejection of each unsafe repair.`);
+        nextCompletionMessage = `Tests passed. Complete the review trail: ${reviewedCount}/${fixes.length} options judged, including rejection of each unsafe repair.`;
       }
+      setCompletionMessage(nextCompletionMessage);
+      saveWorkspace(filesRef.current, activeFile, decisions, activeAppliedFixId, execution.result, nextCompletionMessage);
     } catch (error) {
       setExecutionError(error instanceof Error ? error.message : "The verification runner could not start.");
     } finally {
@@ -490,7 +497,7 @@ export function IncidentWorkbench() {
 
   const openFile = (path: string) => {
     setActiveFile(path);
-    saveDraft(filesRef.current, path);
+    saveWorkspace(filesRef.current, path, decisions, activeAppliedFixId, result, completionMessage);
     setLeftTab("files");
   };
 
